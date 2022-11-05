@@ -188,8 +188,10 @@ public class MainHook implements IXposedHookLoadPackage {
 //                            Log.d("aahs", getItem.toString());
                             if (!getItem.getClass().getSimpleName().equals("RecentItemTroopMsgData")) {
                                 LinearLayout layout = (LinearLayout) param.args[1];
-                                ergodicImageView(layout);
-                                param.setResult(layout);
+                                if (layout != null) {
+                                    ergodicImageView(layout);
+                                    param.setResult(layout);
+                                }
                             }
                         }
 
