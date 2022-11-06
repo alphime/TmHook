@@ -46,7 +46,7 @@ public class MainHook implements IXposedHookLoadPackage {
             if (classLoader == null) {
                 classLoader = loadPackageParam.classLoader;
             }
-            hookFriendPhoto();
+            hookFriendPhotos();
 
 //  ===================================================================================
             hookMsgListForService();
@@ -135,7 +135,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 });
     }
 
-    private void hookFriendPhoto() {
+    private void hookFriendPhotos() {
         //            XposedHelpers.findAndHookMethod("com.tencent.mobileqq.activity.ChatSettingForTroop", classLoader,
 //                    "ax", new XC_MethodHook() {
 //                        @Override
