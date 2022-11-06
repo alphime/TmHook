@@ -13,14 +13,12 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -180,36 +178,57 @@ public class MainHook implements IXposedHookLoadPackage {
             XposedHelpers.findAndHookMethod(aahs,
                     "getView", int.class, View.class, ViewGroup.class,
                     new XC_MethodHook() {
+                        private long l;
+                        private final String TAG = "aahs";
+
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                             int i0 = (int) param.args[0];
                             Object thisObject = param.thisObject;
                             Object getItem = thisObject.getClass().getDeclaredMethod("getItem", int.class).invoke(thisObject, i0);
 //                            Log.d("aahs", getItem.toString());
-                            if (!getItem.getClass().getSimpleName().equals("RecentItemTroopMsgData")) {
+                            Class<?> clazz = getItem.getClass();
+                            if (!clazz.getSimpleName().equals("RecentItemTroopMsgData")) {
                                 LinearLayout layout = (LinearLayout) param.args[1];
                                 if (layout != null) {
-                                    ergodicImageView(layout);
+//                                    Log.d(TAG, "getItem: " + getItem.toString());
+                                    ergodicImageView(layout, 1);
                                     param.setResult(layout);
+                                } else {
+                                    Log.e(TAG, layout.toString() + ": layout is null");
                                 }
                             }
                         }
 
-                        private void ergodicImageView(ViewGroup v) {
+                        private void ergodicImageView(ViewGroup v, int a) {
                             for (int i = 0; i < v.getChildCount(); i++) {
                                 View view = v.getChildAt(i);
                                 if (view instanceof ViewGroup) {
                                     ViewGroup viewGroup = (ViewGroup) view;
-                                    ergodicImageView(viewGroup);
+//                                    Log.w(TAG, "e... " + v.toString());           // debug-2‘
+                                    a++;
+                                    ergodicImageView(viewGroup, a);
                                 } else {
                                     if (view instanceof ImageView) {
                                         ImageView imageView = (ImageView) view;
-                                        Drawable drawable = imageView.getDrawable();
-                                        if (drawable != null && drawable.getIntrinsicWidth() > 0) {
-//                                            Log.d("aahs", drawable.toString());
+                                        Drawable drawable = imageView.getDrawable();        // debug-2’
+                                        if (drawable != null && drawable.getClass() != BitmapDrawable.class) {
                                             imageView.setImageBitmap(cutRound(drawable));
+                                            Log.d(TAG, System.currentTimeMillis() - l + "ms");
+                                            l = System.currentTimeMillis();
+//                                            Log.e(TAG, "处理" + a + ", " + (i + 1) + "个");      // debug-2‘
+                                        } else {
+                                            if (drawable == null) {
+                                                XposedBridge.log("aahs-obj!err: " + imageView + "; drawable is null");
+                                                Log.e(TAG, imageView.toString() + ": drawable is null");
+                                            } else if (drawable.getIntrinsicWidth() == 0) {
+                                                XposedBridge.log("aahs-obj!err: " + imageView + "; drawable's width=0");
+                                                Log.e(TAG, imageView.toString() + ": drawable's width=0");
+                                            }
+//                                            Log.e(TAG, "无处理，遍历了" + a + "个layout");        // debug-2’
                                         }
                                     }
+                                    break;
                                 }
                             }
                         }
