@@ -80,7 +80,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         Log.d(TAG, param.getResult().toString());
                         FrameLayout layout = (FrameLayout) param.getResult();
                         if (layout != null) {
-                            ergodicImageView(layout, false, true);
+                            ergodicImageView(layout, true);
                             param.setResult(layout);
                             Log.d(TAG, "success");
                         } else {
@@ -125,7 +125,7 @@ public class MainHook implements IXposedHookLoadPackage {
                             LinearLayout layout = (LinearLayout) param.getResult();
                             if (layout != null) {
 //                                    Log.d(TAG, "getItem: " + getItem.toString());
-                                ergodicImageView(layout, true, false);
+                                ergodicImageView(layout, false);
                                 param.setResult(layout);
                             } else {
                                 Log.e(TAG, layout.toString() + ": layout is null");
@@ -278,14 +278,14 @@ public class MainHook implements IXposedHookLoadPackage {
         return outBitmap;
     }
 
-    private void ergodicImageView(ViewGroup v, boolean onlyOnce, boolean fixImageBG) {
+    private void ergodicImageView(ViewGroup v, boolean fixImageBG) {
         String TAG = "ergodicImageView";
         for (int i = 0; i < v.getChildCount(); i++) {
             View view = v.getChildAt(i);
             if (view instanceof ViewGroup) {
                 ViewGroup viewGroup = (ViewGroup) view;
 //                                    Log.w(TAG, "e... " + v.toString());           // debug-2‘
-                ergodicImageView(viewGroup, onlyOnce, fixImageBG);
+                ergodicImageView(viewGroup, fixImageBG);
             } else {
                 if (view instanceof ImageView) {
                     ImageView imageView = (ImageView) view;
@@ -307,9 +307,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         }
                     }
                 }
-                if (onlyOnce) {
-                    break;
-                }
+                break;
             }
         }
     }
