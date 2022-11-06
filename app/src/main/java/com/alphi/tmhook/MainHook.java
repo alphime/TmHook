@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,15 +34,109 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
-    private static Method qi_Mtd = null;
-    private static Class<?> aahs;
+    private Method qi_Mtd;
+    private Class<?> aahs;
+    private ClassLoader classLoader;
+    private Class<?> yyr;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
 
         if (loadPackageParam.packageName.equals("com.tencent.tim")) {
-            ClassLoader classLoader = loadPackageParam.classLoader;
-//            XposedHelpers.findAndHookMethod("com.tencent.mobileqq.activity.ChatSettingForTroop", classLoader,
+            if (classLoader == null) {
+                classLoader = loadPackageParam.classLoader;
+            }
+            hookFriendPhoto();
+
+//  ===================================================================================
+            hookMsgListForService();
+            hookDeviceListFragment();
+        }
+    }
+
+    private void hookDeviceListFragment() {
+        final String TAG = "yyr";
+        Class<?> clazz = XposedHelpers.findClass("com.tencent.mobileqq.activity.contacts.device.DeviceFragment", classLoader);
+        if (yyr == null) {
+            for (Field field : clazz.getDeclaredFields()) {
+                Class<?> clazz2 = field.getType();
+                if (BaseAdapter.class.isAssignableFrom(clazz2)) {
+                    yyr = clazz2;
+                    break;
+                }
+            }
+        }
+        if (yyr == null) {
+            XposedBridge.log(TAG + ": " + "Not Found BaseAdapt!");
+            Log.e(TAG, "BaseAdapt is null");
+            return;
+        }
+        XposedHelpers.findAndHookMethod(yyr,
+                "getView", int.class, View.class, ViewGroup.class,
+                new XC_MethodHook() {
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        Log.d(TAG, param.getResult().toString());
+                        FrameLayout layout = (FrameLayout) param.getResult();
+                        if (layout != null) {
+                            ergodicImageView(layout, false, true);
+                            param.setResult(layout);
+                            Log.d(TAG, "success");
+                        } else {
+                            Log.e(TAG, layout.toString() + ": layout is null");
+                        }
+                    }
+                });
+    }
+
+    private void hookMsgListForService() {
+        final String TAG = "aahs";
+        String[] claNames = {"com.tencent.mobileqq.confess.BaseMsgListFragment", "com.tencent.mobileqq.activity.Conversation",
+                "com.tencent.biz.pubaccount.ecshopassit.EcshopUtils$1", "com.tencent.mobileqq.activity.TroopAssistantActivity",
+                "com.tencent.mobileqq.apollo.activity.HotChatCenterFragment", "com.tencent.mobileqq.app.hiddenchat.HiddenChatFragment"
+                , "BaseMsgBoxActivity"};
+        if (aahs == null) {
+            F1:
+            for (String claName : claNames) {
+                Class<?> clazz1 = XposedHelpers.findClass(claName, classLoader);
+                for (Field field : clazz1.getFields()) {
+                    Class<?> type = field.getType();
+                    if (type.getSuperclass() == BaseAdapter.class) {
+                        aahs = type;
+                        break F1;
+                    }
+                }
+            }
+        }
+        XposedHelpers.findAndHookMethod(aahs,
+                "getView", int.class, View.class, ViewGroup.class,
+                new XC_MethodHook() {
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        int i0 = (int) param.args[0];
+                        Object thisObject = param.thisObject;
+                        Object getItem = thisObject.getClass().getDeclaredMethod("getItem", int.class).invoke(thisObject, i0);
+//                            Log.d("aahs", getItem.toString());
+                        Class<?> clazz = getItem.getClass();
+                        // 排除群消息
+                        if (!clazz.getSimpleName().equals("RecentItemTroopMsgData")) {
+                            LinearLayout layout = (LinearLayout) param.getResult();
+                            if (layout != null) {
+//                                    Log.d(TAG, "getItem: " + getItem.toString());
+                                ergodicImageView(layout, true, false);
+                                param.setResult(layout);
+                            } else {
+                                Log.e(TAG, layout.toString() + ": layout is null");
+                            }
+                        }
+                    }
+                });
+    }
+
+    private void hookFriendPhoto() {
+        //            XposedHelpers.findAndHookMethod("com.tencent.mobileqq.activity.ChatSettingForTroop", classLoader,
 //                    "ax", new XC_MethodHook() {
 //                        @Override
 //                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -102,137 +197,41 @@ public class MainHook implements IXposedHookLoadPackage {
 
 //  标注：以上方法废弃！
 
-            Class<?> clazz = XposedHelpers.findClass("com.tencent.mobileqq.app.QQAppInterface", classLoader);
-            XposedHelpers.findAndHookMethod(clazz,
-                    "putBitmapToCache", String.class, Bitmap.class, byte.class, new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                            Bitmap bitmap = (Bitmap) param.args[1];
-                            bitmap = cutRound(bitmap);
-                            param.args[1] = bitmap;
-                        }
-                    });
-
-            if (qi_Mtd == null) {
-                Class<?>[] classes = {int.class, String.class, byte.class, int.class, boolean.class, byte.class, int.class};
-                for (Method method : clazz.getDeclaredMethods()) {
-                    Class<?>[] parameterTypes = method.getParameterTypes();
-                    if (Arrays.equals(parameterTypes, classes)) {
-                        qi_Mtd = method;
-                        break;
-                    }
-                }
-            }
-
-            if (qi_Mtd != null) {
-                XposedBridge.hookMethod(qi_Mtd, new XC_MethodHook() {
+        // hook 缓存
+        Class<?> clazz = XposedHelpers.findClass("com.tencent.mobileqq.app.QQAppInterface", classLoader);
+        XposedHelpers.findAndHookMethod(clazz,
+                "putBitmapToCache", String.class, Bitmap.class, byte.class, new XC_MethodHook() {
                     @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        Bitmap bitmap = (Bitmap) param.getResult();
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        Bitmap bitmap = (Bitmap) param.args[1];
                         bitmap = cutRound(bitmap);
-                        param.setResult(bitmap);
+                        param.args[1] = bitmap;
                     }
                 });
-            } else {
-                Log.e("QQFaceRoundHook", "没有找到方法!");
-            }
 
-// ---------------------------------------------------------------------------------------
-
-//            Class<?> aqai_CLazz = XposedHelpers.findClass("aqai", classLoader);
-//            for (Method method : aqai_CLazz.getDeclaredMethods()) {
-//                if (method.getName().equals("run")) {
-//                    XposedBridge.hookMethod(method, new XC_MethodReplacement() {
-//                        @Override
-//                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-//                            Object arg1 = methodHookParam.args[0];
-//                            Bitmap bitmap = (Bitmap) methodHookParam.args[1];
-//                            if (bitmap == null)
-//                                return null;
-//                            Object obj = arg1.getClass().getDeclaredField("tag").get(arg1);
-//                            if (!(obj instanceof int[]) || ((int[]) obj).length != 2) {
-//                                return bitmap;
-//                            }
-//                            return cutRound(bitmap);
-//                        }
-//                    });
-//                }
-//            }
-
-//  ===================================================================================
-            String[] claNames = {"com.tencent.mobileqq.confess.BaseMsgListFragment", "com.tencent.mobileqq.activity.Conversation",
-                    "com.tencent.biz.pubaccount.ecshopassit.EcshopUtils$1", "com.tencent.mobileqq.activity.TroopAssistantActivity",
-                    "com.tencent.mobileqq.apollo.activity.HotChatCenterFragment", "com.tencent.mobileqq.app.hiddenchat.HiddenChatFragment"
-                    , "BaseMsgBoxActivity"};
-            F1:
-            for (String claName : claNames) {
-                Class<?> clazz1 = XposedHelpers.findClass(claName, classLoader);
-                for (Field field : clazz1.getFields()) {
-                    Class<?> type = field.getType();
-                    if (type.getSuperclass() == BaseAdapter.class) {
-                        aahs = type;
-                        break F1;
-                    }
+        // hook 刚下载的图片
+        if (qi_Mtd == null) {
+            Class<?>[] classes = {int.class, String.class, byte.class, int.class, boolean.class, byte.class, int.class};
+            for (Method method : clazz.getDeclaredMethods()) {
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                if (Arrays.equals(parameterTypes, classes)) {
+                    qi_Mtd = method;
+                    break;
                 }
             }
-            XposedHelpers.findAndHookMethod(aahs,
-                    "getView", int.class, View.class, ViewGroup.class,
-                    new XC_MethodHook() {
-                        private long l;
-                        private final String TAG = "aahs";
+        }
 
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            int i0 = (int) param.args[0];
-                            Object thisObject = param.thisObject;
-                            Object getItem = thisObject.getClass().getDeclaredMethod("getItem", int.class).invoke(thisObject, i0);
-//                            Log.d("aahs", getItem.toString());
-                            Class<?> clazz = getItem.getClass();
-                            if (!clazz.getSimpleName().equals("RecentItemTroopMsgData")) {
-                                LinearLayout layout = (LinearLayout) param.getResult();
-                                if (layout != null) {
-//                                    Log.d(TAG, "getItem: " + getItem.toString());
-                                    ergodicImageView(layout, 1);
-                                    param.setResult(layout);
-                                } else {
-                                    Log.e(TAG, layout.toString() + ": layout is null");
-                                }
-                            }
-                        }
-
-                        private void ergodicImageView(ViewGroup v, int a) {
-                            for (int i = 0; i < v.getChildCount(); i++) {
-                                View view = v.getChildAt(i);
-                                if (view instanceof ViewGroup) {
-                                    ViewGroup viewGroup = (ViewGroup) view;
-//                                    Log.w(TAG, "e... " + v.toString());           // debug-2‘
-                                    a++;
-                                    ergodicImageView(viewGroup, a);
-                                } else {
-                                    if (view instanceof ImageView) {
-                                        ImageView imageView = (ImageView) view;
-                                        Drawable drawable = imageView.getDrawable();        // debug-2’
-                                        if (drawable != null && drawable.getClass() != BitmapDrawable.class) {
-                                            imageView.setImageBitmap(cutRound(drawable));
-                                            Log.d(TAG, System.currentTimeMillis() - l + "ms");
-                                            l = System.currentTimeMillis();
-//                                            Log.e(TAG, "处理" + a + ", " + (i + 1) + "个");      // debug-2‘
-                                        } else {
-                                            if (drawable == null) {
-                                                XposedBridge.log("aahs-obj!err: " + imageView + "; drawable is null");
-                                                Log.e(TAG, imageView.toString() + ": drawable is null");
-                                            } else if (drawable.getIntrinsicWidth() == 0) {
-                                                XposedBridge.log("aahs-obj!err: " + imageView + "; drawable's width=0");
-                                                Log.e(TAG, imageView.toString() + ": drawable's width=0");
-                                            }
-//                                            Log.e(TAG, "无处理，遍历了" + a + "个layout");        // debug-2’
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                    });
+        if (qi_Mtd != null) {
+            XposedBridge.hookMethod(qi_Mtd, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    Bitmap bitmap = (Bitmap) param.getResult();
+                    bitmap = cutRound(bitmap);
+                    param.setResult(bitmap);
+                }
+            });
+        } else {
+            Log.e("QQFaceRoundHook", "没有找到方法!");
         }
     }
 
@@ -277,6 +276,42 @@ public class MainHook implements IXposedHookLoadPackage {
         canvas.drawBitmap(source, 0, 0, paint);
 //        Log.w("convertRound", "r=" + r + "; " + (System.currentTimeMillis() - millis) + "ms");
         return outBitmap;
+    }
+
+    private void ergodicImageView(ViewGroup v, boolean onlyOnce, boolean fixImageBG) {
+        String TAG = "ergodicImageView";
+        for (int i = 0; i < v.getChildCount(); i++) {
+            View view = v.getChildAt(i);
+            if (view instanceof ViewGroup) {
+                ViewGroup viewGroup = (ViewGroup) view;
+//                                    Log.w(TAG, "e... " + v.toString());           // debug-2‘
+                ergodicImageView(viewGroup, onlyOnce, fixImageBG);
+            } else {
+                if (view instanceof ImageView) {
+                    ImageView imageView = (ImageView) view;
+                    Drawable drawable = imageView.getDrawable();        // debug-2’
+                    if (drawable != null && (drawable.getClass() != BitmapDrawable.class)) {
+                        if (fixImageBG) {
+                            Drawable mImageViewBackground = imageView.getBackground();
+                            if (mImageViewBackground != null)
+                                imageView.setBackground(new BitmapDrawable(imageView.getContext().getResources(), cutRound(mImageViewBackground)));
+                        }
+                        imageView.setImageBitmap(cutRound(imageView.getDrawable()));
+                    } else {
+                        if (drawable == null) {
+                            XposedBridge.log(TAG + "-obj!err: " + imageView + "; drawable is null");
+                            Log.e(TAG, imageView.toString() + ": drawable is null");
+                        } else if (drawable.getIntrinsicWidth() == 0) {
+                            XposedBridge.log(TAG + "-obj!err: " + imageView + "; drawable's width=0");
+                            Log.e(TAG, imageView.toString() + ": drawable's width=0");
+                        }
+                    }
+                }
+                if (onlyOnce) {
+                    break;
+                }
+            }
+        }
     }
 
     private Toast newImageToast(Context context, Bitmap bitmap) {
