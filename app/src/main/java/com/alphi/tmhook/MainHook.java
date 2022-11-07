@@ -278,33 +278,25 @@ public class MainHook implements IXposedHookLoadPackage {
         return outBitmap;
     }
 
-    private void ergodicImageView(ViewGroup v, boolean fixImageBG) {
+    private void ergodicImageView(ViewGroup v, boolean fixImageBFG) {
         String TAG = "ergodicImageView";
         for (int i = 0; i < v.getChildCount(); i++) {
             View view = v.getChildAt(i);
             if (view instanceof ViewGroup) {
                 ViewGroup viewGroup = (ViewGroup) view;
 //                                    Log.w(TAG, "e... " + v.toString());           // debug-2‘
-                ergodicImageView(viewGroup, fixImageBG);
+                ergodicImageView(viewGroup, fixImageBFG);
             } else {
                 if (view instanceof ImageView) {
                     ImageView imageView = (ImageView) view;
                     Drawable drawable = imageView.getDrawable();        // debug-2’
+                    if (fixImageBFG) {
+                        Drawable mImageViewBackground = imageView.getBackground();
+                        if (mImageViewBackground != null)
+                            imageView.setBackground(new BitmapDrawable(imageView.getContext().getResources(), cutRound(mImageViewBackground)));
+                    }
                     if (drawable != null && (drawable.getClass() != BitmapDrawable.class)) {
-                        if (fixImageBG) {
-                            Drawable mImageViewBackground = imageView.getBackground();
-                            if (mImageViewBackground != null)
-                                imageView.setBackground(new BitmapDrawable(imageView.getContext().getResources(), cutRound(mImageViewBackground)));
-                        }
                         imageView.setImageBitmap(cutRound(imageView.getDrawable()));
-                    } else {
-                        if (drawable == null) {
-                            XposedBridge.log(TAG + "-obj!err: " + imageView + "; drawable is null");
-                            Log.e(TAG, imageView.toString() + ": drawable is null");
-                        } else if (drawable.getIntrinsicWidth() == 0) {
-                            XposedBridge.log(TAG + "-obj!err: " + imageView + "; drawable's width=0");
-                            Log.e(TAG, imageView.toString() + ": drawable's width=0");
-                        }
                     }
                 }
                 break;
