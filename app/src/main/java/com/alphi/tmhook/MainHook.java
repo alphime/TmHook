@@ -13,7 +13,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -23,9 +22,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -38,6 +40,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private Class<?> aahs;
     private ClassLoader classLoader;
     private Class<?> yyr;
+    private Class<?> aszk;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
@@ -51,13 +54,86 @@ public class MainHook implements IXposedHookLoadPackage {
 //  ===================================================================================
             hookMsgListForService();
             hookDeviceListFragment();
+
+            hookShowIQQLevel();
         }
+    }
+
+    private void hookShowIQQLevel() {
+        String tag = "hILevel";
+        Class<?> mCardClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.data.Card", classLoader);
+        if (mCardClass == null) {
+            MLog.e(tag, "not found card class");
+            return;
+        }
+//        for (Method method : mCardClass.getDeclaredMethods()) {
+//            XposedBridge.hookMethod(method, new XC_MethodHook() {
+//                @Override
+//                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                    MLog.d(tag, method.toString());        // getPersonalityLabel 一次
+//                }
+//            });
+//        }
+        HashMap<String, Integer> iQQLevelMap = new HashMap<>();
+        XposedHelpers.findAndHookMethod(mCardClass, "getPersonalityLabel", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                Object thisObject = param.thisObject;
+                Class<?> thisObjectClass = thisObject.getClass();
+                String uin = (String) thisObjectClass.getField("uin").get(thisObject);
+                Integer iQQLevel = (Integer) thisObjectClass.getField("iQQLevel").get(thisObject);
+//                Log.d(tag, uin + ": " + iQQLevel);
+                iQQLevelMap.put(uin, iQQLevel);
+            }
+        });
+
+        if (aszk == null) {
+            Class<?> mBaseProfileFmClass = XposedHelpers.findClassIfExists("com.tencent.tim.activity.profile.BaseProfileFragment", classLoader);
+            for (Field field : mBaseProfileFmClass.getDeclaredFields()) {
+                Class<?> typeClass = field.getType();
+                if (BaseAdapter.class.isAssignableFrom(typeClass)) {
+                    aszk = typeClass;
+                }
+            }
+        }
+        XposedHelpers.findAndHookMethod(aszk, "setDataList", List.class,
+                new XC_MethodHook() {
+
+                    private Object asznObjTemp;
+
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        List list = (List) param.args[0];
+                        if (list.contains(asznObjTemp))
+                            return;
+                        String uin = null;
+                        Object obj = null;
+                        for (Object o : list) {
+                            Class<?> clazz = o.getClass();
+                            String name = (String) clazz.getDeclaredField("name").get(o);
+                            if (name.endsWith("账号")) {
+                                uin = (String) clazz.getDeclaredField("content").get(o);
+                                obj = o;
+                            }
+                        }
+                        Constructor<?> constructor = obj.getClass().
+                                getDeclaredConstructor(String.class, String.class, boolean.class, int.class, int.class, int.class);
+                        constructor.setAccessible(true);
+                        asznObjTemp = constructor.newInstance("QQ等级", iQQLevelMap.get(uin) + "级", false, 0, 21, 1);
+                        list.add(asznObjTemp);
+                        param.args[0] = list;
+                    }
+                });
     }
 
     private void hookDeviceListFragment() {
         final String TAG = "yyr";
-        Class<?> clazz = XposedHelpers.findClass("com.tencent.mobileqq.activity.contacts.device.DeviceFragment", classLoader);
         if (yyr == null) {
+            Class<?> clazz = XposedHelpers.findClassIfExists("com.tencent.mobileqq.activity.contacts.device.DeviceFragment", classLoader);
+            if (clazz == null) {
+                MLog.e(TAG, "not found DeviceFragment class");
+                return;
+            }
             for (Field field : clazz.getDeclaredFields()) {
                 Class<?> clazz2 = field.getType();
                 if (BaseAdapter.class.isAssignableFrom(clazz2)) {
@@ -66,25 +142,20 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             }
         }
-        if (yyr == null) {
-            XposedBridge.log(TAG + ": " + "Not Found BaseAdapt!");
-            Log.e(TAG, "BaseAdapt is null");
-            return;
-        }
         XposedHelpers.findAndHookMethod(yyr,
                 "getView", int.class, View.class, ViewGroup.class,
                 new XC_MethodHook() {
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        Log.d(TAG, param.getResult().toString());
+//                        MLog.d(TAG, param.getResult().toString());
                         FrameLayout layout = (FrameLayout) param.getResult();
                         if (layout != null) {
                             ergodicImageView(layout, true);
                             param.setResult(layout);
-                            Log.d(TAG, "success");
+//                            Log.d(TAG, "success");
                         } else {
-                            Log.e(TAG, layout.toString() + ": layout is null");
+                            MLog.e(TAG, layout.toString() + ": layout is null");
                         }
                     }
                 });
@@ -99,7 +170,11 @@ public class MainHook implements IXposedHookLoadPackage {
         if (aahs == null) {
             F1:
             for (String claName : claNames) {
-                Class<?> clazz1 = XposedHelpers.findClass(claName, classLoader);
+                Class<?> clazz1 = XposedHelpers.findClassIfExists(claName, classLoader);
+                if (clazz1 == null) {
+                    MLog.e(TAG, "not found auxiliary class");
+                    return;
+                }
                 for (Field field : clazz1.getFields()) {
                     Class<?> type = field.getType();
                     if (type.getSuperclass() == BaseAdapter.class) {
@@ -118,17 +193,17 @@ public class MainHook implements IXposedHookLoadPackage {
                         int i0 = (int) param.args[0];
                         Object thisObject = param.thisObject;
                         Object getItem = thisObject.getClass().getDeclaredMethod("getItem", int.class).invoke(thisObject, i0);
-//                            Log.d("aahs", getItem.toString());
+//                            MLog.d("aahs", getItem.toString());
                         Class<?> clazz = getItem.getClass();
                         // 排除群消息
                         if (!clazz.getSimpleName().equals("RecentItemTroopMsgData")) {
                             LinearLayout layout = (LinearLayout) param.getResult();
                             if (layout != null) {
-//                                    Log.d(TAG, "getItem: " + getItem.toString());
+//                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
                                 param.setResult(layout);
                             } else {
-                                Log.e(TAG, layout.toString() + ": layout is null");
+                                MLog.e(TAG, layout.toString() + ": layout is null");
                             }
                         }
                     }
@@ -178,19 +253,19 @@ public class MainHook implements IXposedHookLoadPackage {
 //            try {
 //                Class<?> aqgg = XposedHelpers.findClass("aqgg", classLoader);
 //                aqgg = XposedHelpers.findClass(aqgg.getName(), null);
-//                Log.d(Tag, aqgg.toString());
+//                MLog.d(Tag, aqgg.toString());
 //                XposedHelpers.findAndHookMethod(aqgg, "s", new XC_MethodHook() {
 //                            @Override
 //                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 //                                Log.d(Tag, "beforeHookedMethod: hook");
-//                                Log.d(Tag, "beforeHookedMethod: " + param.method);
+//                                MLog.d(Tag, "beforeHookedMethod: " + param.method);
 //                                Bitmap bitmap = (Bitmap) param.getResult();
 //                                bitmap = cutRound(bitmap);
 //                                param.setResult(bitmap);
 //                            }
 //                        });
 //            } catch (Exception e) {
-//                Log.e(Tag, "err", e);
+//                MLog.e(Tag, "err", e);
 //            }
 //                        }
 //                    });
@@ -198,7 +273,12 @@ public class MainHook implements IXposedHookLoadPackage {
 //  标注：以上方法废弃！
 
         // hook 缓存
-        Class<?> clazz = XposedHelpers.findClass("com.tencent.mobileqq.app.QQAppInterface", classLoader);
+        Class<?> clazz = XposedHelpers.findClassIfExists("com.tencent.mobileqq.app.QQAppInterface", classLoader);
+        if (clazz == null) {
+            MLog.e("QQFaceRoundHook", "not found class err");
+            return;
+        }
+
         XposedHelpers.findAndHookMethod(clazz,
                 "putBitmapToCache", String.class, Bitmap.class, byte.class, new XC_MethodHook() {
                     @Override
@@ -231,7 +311,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             });
         } else {
-            Log.e("QQFaceRoundHook", "没有找到方法!");
+            MLog.e("QQFaceRoundHook", "没有找到方法!");
         }
     }
 
@@ -284,7 +364,7 @@ public class MainHook implements IXposedHookLoadPackage {
             View view = v.getChildAt(i);
             if (view instanceof ViewGroup) {
                 ViewGroup viewGroup = (ViewGroup) view;
-//                                    Log.w(TAG, "e... " + v.toString());           // debug-2‘
+//                                    MLog.w(TAG, "e... " + v.toString());           // debug-2‘
                 ergodicImageView(viewGroup, fixImageBFG);
             } else {
                 if (view instanceof ImageView) {
