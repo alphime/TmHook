@@ -71,13 +71,18 @@ public class MainHook implements IXposedHookLoadPackage {
 //                @Override
 //                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 //                    MLog.d(tag, method.toString());        // getPersonalityLabel 一次
+//                    Object thisObject = param.thisObject;
+//                    Class<?> thisObjectClass = thisObject.getClass();
+//                    String uin = (String) thisObjectClass.getField("uin").get(thisObject);
+//                    Integer iQQLevel = (Integer) thisObjectClass.getField("iQQLevel").get(thisObject);
+//                    Log.d(tag, uin + ": " + iQQLevel);
 //                }
 //            });
 //        }
         HashMap<String, Integer> iQQLevelMap = new HashMap<>();
-        XposedHelpers.findAndHookMethod(mCardClass, "getPersonalityLabel", new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod(mCardClass, "setPhotoShowFlag", boolean.class, new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Object thisObject = param.thisObject;
                 Class<?> thisObjectClass = thisObject.getClass();
                 String uin = (String) thisObjectClass.getField("uin").get(thisObject);
@@ -119,7 +124,11 @@ public class MainHook implements IXposedHookLoadPackage {
                         Constructor<?> constructor = obj.getClass().
                                 getDeclaredConstructor(String.class, String.class, boolean.class, int.class, int.class, int.class);
                         constructor.setAccessible(true);
-                        asznObjTemp = constructor.newInstance("QQ等级", iQQLevelMap.get(uin) + "级", false, 0, 21, 1);
+                        Integer qLevel = null;
+                        for (int i = 0; i < 10 || qLevel == 0; i++) {
+                            qLevel = iQQLevelMap.get(uin);
+                        }
+                        asznObjTemp = constructor.newInstance("QQ等级", qLevel + "级", false, 0, 21, 1);
                         list.add(asznObjTemp);
                         param.args[0] = list;
                     }
