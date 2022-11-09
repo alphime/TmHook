@@ -13,6 +13,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -25,12 +26,14 @@ import android.widget.Toast;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -41,6 +44,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private ClassLoader classLoader;
     private Class<?> yyr;
     private Class<?> aszk;
+    private Class<?> auffa;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
@@ -56,6 +60,73 @@ public class MainHook implements IXposedHookLoadPackage {
             hookDeviceListFragment();
 
             hookShowIQQLevel();
+            fixMailModule();
+        }
+    }
+
+    private void fixMailModule() {
+//        XposedHelpers.findAndHookMethod("com.tencent.tim.activity.TimLebaListMgrActivity", classLoader, "doOnCreate", Bundle.class,
+//        new XC_MethodHook() {
+//            @Override
+//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                Log.d("ataw", "load");
+//                Object thisObject = param.thisObject;
+//                Field[] fields = thisObject.getClass().getDeclaredFields();
+//                for (Field field : fields) {
+//                    field.setAccessible(true);
+//                    Log.d("ataw", field.getName() + ": " + field.get(thisObject));
+//                }
+//            }
+//        });
+        // 以上非根源，为垃圾推理，最终在于QQInterface.ek()Ljava/util/List => Laulz！
+        Class<?> clazz = XposedHelpers.findClassIfExists("com.tencent.mobileqq.activity.aio.item.StructingMsgItemBuilder", classLoader);
+        if (clazz == null) {
+            clazz = XposedHelpers.findClassIfExists("com.tencent.tim.mail.MailPluginPreload", classLoader);
+            if (clazz == null) {
+                XposedBridge.log("mailHookInit-err!: not found MailPluginPreload and StructingMsgItemBuilder");
+                return;
+            }
+        }
+        if (auffa == null) {
+            for (Field field : clazz.getDeclaredFields()) {
+                Class<?> aClass = field.getType();
+                if (aClass.isPrimitive())
+                    continue;
+                if (aClass.getFields().length == 1) {
+                    Method[] methods = aClass.getDeclaredMethods();
+                    if (methods.length == 2) {
+                        int found = 0;
+                        for (Method method : methods) {
+                            if (method.getReturnType() == aClass && Modifier.isStatic(method.getModifiers()) && method.getParameterTypes().length == 1 && method.getParameterTypes()[0].isArray() || method.getReturnType() == boolean.class) {
+                                found ++;
+                            }
+                        }
+                        if (found == 2) {
+                            auffa = aClass;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (auffa == null) {
+            XposedBridge.log("mailHookInit-err!: not found auff$a");
+            return;
+        }
+        XposedHelpers.findAndHookMethod(auffa, "isEnable", new XC_MethodReplacement() {
+            @Override
+            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                return true;
+            }
+        });
+    }
+
+    // 打印变量信息
+    private void loggingField(String tag, Object obj) throws IllegalAccessException {
+        Field[] fields = obj.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Log.d(tag, field.getName() + ": " + field.get(obj));
         }
     }
 
