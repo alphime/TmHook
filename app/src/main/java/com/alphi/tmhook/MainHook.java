@@ -113,7 +113,7 @@ public class MainHook implements IXposedHookLoadPackage {
             XposedBridge.log("mailHookInit-err!: not found auff$a");
             return;
         }
-        XposedHelpers.findAndHookMethod(auffa, "isEnable", new XC_MethodReplacement() {
+        XposedHelpers.findAndHookMethod(auffa, "isEnable", new XC_MethodReplacement(5) {
             @Override
             protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
                 return true;
@@ -151,7 +151,7 @@ public class MainHook implements IXposedHookLoadPackage {
 //            });
 //        }
         HashMap<String, Integer> iQQLevelMap = new HashMap<>();
-        XposedHelpers.findAndHookMethod(mCardClass, "setPhotoShowFlag", boolean.class, new XC_MethodHook() {
+        XposedHelpers.findAndHookMethod(mCardClass, "setPhotoShowFlag", boolean.class, new XC_MethodHook(60) {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Object thisObject = param.thisObject;
@@ -266,7 +266,7 @@ public class MainHook implements IXposedHookLoadPackage {
         }
         XposedHelpers.findAndHookMethod(aahs,
                 "getView", int.class, View.class, ViewGroup.class,
-                new XC_MethodHook() {
+                new XC_MethodHook(80) {
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
