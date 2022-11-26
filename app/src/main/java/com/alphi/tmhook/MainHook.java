@@ -5,6 +5,8 @@ package com.alphi.tmhook;
     createDate: 2022/11/5
 */
 
+import static com.alphi.tmhook.ReflectUtil.findClass;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -13,7 +15,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -28,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -61,6 +63,37 @@ public class MainHook implements IXposedHookLoadPackage {
 
             hookShowIQQLevel();
             fixMailModule();
+            swapTimLeba();
+        }
+    }
+
+    private void swapTimLeba() {
+        Class<?> leba = findClass(classLoader, "com.tencent.mobileqq.activity.tim.timme.TimLeba");
+        if (leba == null) {
+            MLog.e("TimLeba", "not found TimLeba");
+            return;
+        }
+        for (Field field : leba.getDeclaredFields()) {
+            Class<?> abav = field.getType();
+            Class<?> superclass = abav.getSuperclass();
+            if (superclass == null)
+                continue;
+            if (superclass.getSimpleName().contains("GridListView") || BaseAdapter.class.isAssignableFrom(abav)) {
+                MLog.i("aumc", "step for found GridListView");
+                for (Method method : abav.getMethods()) {
+                    Class<?>[] parameterTypes = method.getParameterTypes();
+                    if (parameterTypes.length == 1 && parameterTypes[0] == List.class) {
+                        MLog.i("aumc", "step for found GridListView's dataList");
+                        XposedBridge.hookMethod(method, new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                List list = (List) param.args[0];
+                                Collections.swap(list, 7, 8);
+                            }
+                        });
+                    }
+                }
+            }
         }
     }
 
@@ -78,10 +111,10 @@ public class MainHook implements IXposedHookLoadPackage {
 //                }
 //            }
 //        });
-        // 以上非根源，为垃圾推理，最终在于QQInterface.ek()Ljava/util/List => Laulz！
-        Class<?> clazz = XposedHelpers.findClassIfExists("com.tencent.mobileqq.activity.aio.item.StructingMsgItemBuilder", classLoader);
+        // 以上非根源，为垃圾推理，最终在于QQAppInterface.ek()Ljava/util/List => Laulz！
+        Class<?> clazz = findClass(classLoader, "com.tencent.mobileqq.activity.aio.item.StructingMsgItemBuilder");
         if (clazz == null) {
-            clazz = XposedHelpers.findClassIfExists("com.tencent.tim.mail.MailPluginPreload", classLoader);
+            clazz = findClass(classLoader, "com.tencent.tim.mail.MailPluginPreload");
             if (clazz == null) {
                 XposedBridge.log("mailHookInit-err!: not found MailPluginPreload and StructingMsgItemBuilder");
                 return;
@@ -121,18 +154,9 @@ public class MainHook implements IXposedHookLoadPackage {
         });
     }
 
-    // 打印变量信息
-    private void loggingField(String tag, Object obj) throws IllegalAccessException {
-        Field[] fields = obj.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            field.setAccessible(true);
-            Log.d(tag, field.getName() + ": " + field.get(obj));
-        }
-    }
-
     private void hookShowIQQLevel() {
         String tag = "hILevel";
-        Class<?> mCardClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.data.Card", classLoader);
+        Class<?> mCardClass = findClass(classLoader, "com.tencent.mobileqq.data.Card");
         if (mCardClass == null) {
             MLog.e(tag, "not found card class");
             return;
@@ -164,7 +188,7 @@ public class MainHook implements IXposedHookLoadPackage {
         });
 
         if (aszk == null) {
-            Class<?> mBaseProfileFmClass = XposedHelpers.findClassIfExists("com.tencent.tim.activity.profile.BaseProfileFragment", classLoader);
+            Class<?> mBaseProfileFmClass = findClass(classLoader, "com.tencent.tim.activity.profile.BaseProfileFragment");
             for (Field field : mBaseProfileFmClass.getDeclaredFields()) {
                 Class<?> typeClass = field.getType();
                 if (BaseAdapter.class.isAssignableFrom(typeClass)) {
@@ -199,7 +223,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         for (int i = 0; i < 10 || qLevel == 0; i++) {
                             qLevel = iQQLevelMap.get(uin);
                         }
-                        asznObjTemp = constructor.newInstance("QQ等级", qLevel + "级", false, 0, 21, 1);
+                        asznObjTemp = constructor.newInstance("QQ等级", "Lv " + qLevel, false, 0, 21, 1);
                         list.add(asznObjTemp);
                         param.args[0] = list;
                     }
@@ -209,7 +233,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private void hookDeviceListFragment() {
         final String TAG = "yyr";
         if (yyr == null) {
-            Class<?> clazz = XposedHelpers.findClassIfExists("com.tencent.mobileqq.activity.contacts.device.DeviceFragment", classLoader);
+            Class<?> clazz = findClass(classLoader, "com.tencent.mobileqq.activity.contacts.device.DeviceFragment");
             if (clazz == null) {
                 MLog.e(TAG, "not found DeviceFragment class");
                 return;
@@ -250,7 +274,7 @@ public class MainHook implements IXposedHookLoadPackage {
         if (aahs == null) {
             F1:
             for (String claName : claNames) {
-                Class<?> clazz1 = XposedHelpers.findClassIfExists(claName, classLoader);
+                Class<?> clazz1 = findClass(classLoader, claName);
                 if (clazz1 == null) {
                     MLog.e(TAG, "not found auxiliary class");
                     return;
@@ -353,7 +377,7 @@ public class MainHook implements IXposedHookLoadPackage {
 //  标注：以上方法废弃！
 
         // hook 缓存
-        Class<?> clazz = XposedHelpers.findClassIfExists("com.tencent.mobileqq.app.QQAppInterface", classLoader);
+        Class<?> clazz = findClass(classLoader, "com.tencent.mobileqq.app.QQAppInterface");
         if (clazz == null) {
             MLog.e("QQFaceRoundHook", "not found class err");
             return;
