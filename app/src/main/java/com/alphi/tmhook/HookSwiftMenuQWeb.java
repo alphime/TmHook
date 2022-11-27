@@ -1,18 +1,13 @@
 package com.alphi.tmhook;
 
-import static com.alphi.tmhook.utils.CanvasDrawRoundUtil.cutRound;
 import static com.alphi.tmhook.utils.ReflectUtil.findClass;
 
-import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import com.alphi.tmhook.utils.MLog;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +15,6 @@ import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 
 /**
  * IDEA 2022/1/15
@@ -76,37 +70,9 @@ public class HookSwiftMenuQWeb {
                     }
                 }
             }
-//            hookShareFriendIcon(classLoader);
         } catch (Exception e) {
             e.printStackTrace();
             MLog.e(TAG, "HookSwiftMenuQWeb: ", e);
         }
-    }
-
-    // 未完工！
-    private void hookShareFriendIcon(ClassLoader classLoader) {
-        Class<?> v2 = findClass(classLoader, "com.tencent.mobileqq.widget.share.ShareActionSheetV2");
-        XposedHelpers.findAndHookMethod(v2, "ekp", new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                Object obj = param.thisObject;
-                for (Field field : obj.getClass().getDeclaredFields()) {
-                    Type type = field.getGenericType();
-                    // 判断是否为泛型
-                    if (type instanceof ParameterizedType) {
-                        Type[] arguments = ((ParameterizedType) type).getActualTypeArguments();
-                        if (arguments.length == 1 && arguments[0].toString().endsWith("ActionSheetItem")) {
-                            field.setAccessible(true);
-                            List jq = (List) field.get(obj);
-                            for (Object o : jq) {
-                                Field field1 = o.getClass().getField("iconDrawable");
-                                BitmapDrawable o2 = (BitmapDrawable) field1.get(o);
-                                field1.set(o, new BitmapDrawable(cutRound(o2)));
-                            }
-                        }
-                    }
-                }
-            }
-        });
     }
 }
