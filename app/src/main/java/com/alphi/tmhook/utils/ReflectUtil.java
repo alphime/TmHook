@@ -1,4 +1,4 @@
-package com.alphi.tmhook;
+package com.alphi.tmhook.utils;
 
 /*
     author: alphi
@@ -43,7 +43,7 @@ public class ReflectUtil {
     }
 
     // 打印变量信息
-    public void loggingField(String tag, Object obj) throws IllegalAccessException {
+    public static void loggingField(String tag, Object obj) throws IllegalAccessException {
         Field[] fields = obj.getClass().getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
