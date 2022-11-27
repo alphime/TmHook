@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -64,6 +65,7 @@ public class MainHook implements IXposedHookLoadPackage {
             hookShowIQQLevel();
             fixMailModule();
             swapTimLeba();
+            new HookSwiftMenuQWeb(classLoader);
         }
     }
 
@@ -91,8 +93,10 @@ public class MainHook implements IXposedHookLoadPackage {
                                 Collections.swap(list, 7, 8);
                             }
                         });
+                        break;
                     }
                 }
+                break;
             }
         }
     }
@@ -156,6 +160,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private void hookShowIQQLevel() {
         String tag = "hILevel";
+        String IQQLevelContent = "Lv.%d";
         Class<?> mCardClass = findClass(classLoader, "com.tencent.mobileqq.data.Card");
         if (mCardClass == null) {
             MLog.e(tag, "not found card class");
@@ -220,12 +225,15 @@ public class MainHook implements IXposedHookLoadPackage {
                                 getDeclaredConstructor(String.class, String.class, boolean.class, int.class, int.class, int.class);
                         constructor.setAccessible(true);
                         Integer qLevel = null;
-                        for (int i = 0; i < 10 || qLevel == 0; i++) {
+                        for (int i = 0; i < 10 || (qLevel != null && qLevel == 0); i++) {
                             qLevel = iQQLevelMap.get(uin);
                         }
-                        asznObjTemp = constructor.newInstance("QQ等级", "Lv " + qLevel, false, 0, 21, 1);
+                        if (qLevel == null) {
+                            MLog.w("qLevel", "qLevelField value is null!");
+                            return;
+                        }
+                        asznObjTemp = constructor.newInstance("QQ等级", String.format(Locale.ENGLISH, IQQLevelContent, qLevel), false, 0, 21, 1);
                         list.add(asznObjTemp);
-                        param.args[0] = list;
                     }
                 });
     }
