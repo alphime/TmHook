@@ -36,6 +36,8 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
+    private Runnable r1;
+    private Runnable r2;
 
     private final Handler handler;
 
@@ -193,6 +195,9 @@ public class PhotoFixRound {
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        if (r1 != null) {
+                            handler.removeCallbacks(r1);
+                        }
                         int i0 = (int) param.args[0];
                         BaseAdapter baseAdapter = (BaseAdapter) param.thisObject;
                         Object getItem = baseAdapter.getClass().getDeclaredMethod("getItem", int.class).invoke(baseAdapter, i0);
@@ -205,7 +210,8 @@ public class PhotoFixRound {
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
-                                baseAdapter.notifyDataSetChanged();
+                                r1 = baseAdapter::notifyDataSetChanged;
+                                handler.post(r1);
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
@@ -277,12 +283,15 @@ public class PhotoFixRound {
                 XposedBridge.hookMethod(method, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        if (r2 != null)
+                            handler.removeCallbacks(r2);
                         Object arg = param.args[0];
                         ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
                         Drawable background = new BitmapDrawable(cutRound(vIcon.getBackground()));
                         vIcon.setBackground(background);
                         BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                        handler.post(adapter::notifyDataSetChanged);
+                        r2 = adapter::notifyDataSetChanged;
+                        handler.post(r2);
                     }
                 });
                 break;
