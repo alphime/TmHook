@@ -11,6 +11,7 @@ import static com.alphi.tmhook.utils.ReflectUtil.findClass;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -34,6 +35,9 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
+
+    private final Handler handler = new Handler();
+    private Runnable r;
 
     private PhotoFixRound() {
         super();
@@ -239,8 +243,7 @@ public class PhotoFixRound {
                         if (layout != null) {
                             BaseAdapter adapter = (BaseAdapter) param.thisObject;
                             ergodicImageView(layout, true);
-                            param.setResult(layout);
-                            adapter.notifyDataSetChanged();
+                            handler.post(adapter::notifyDataSetChanged);
 //                            Log.d(TAG, "success");
                         } else {
                             MLog.e(TAG, layout.toString() + ": layout is null");
@@ -280,7 +283,10 @@ public class PhotoFixRound {
                         Drawable background = new BitmapDrawable(cutRound(vIcon.getBackground()));
                         vIcon.setBackground(background);
                         BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                        adapter.notifyDataSetChanged();
+                        if (r != null)
+                            handler.removeCallbacks(r);
+                        r = adapter::notifyDataSetChanged;
+                        handler.post(r);
                     }
                 });
                 break;
