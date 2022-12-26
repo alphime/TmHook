@@ -19,12 +19,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.alphi.tmhook.utils.MLog;
-import com.alphi.tmhook.utils.ReflectUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -202,8 +201,6 @@ public class PhotoFixRound {
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
-                                param.setResult(layout);
-                                adapter.notifyDataSetChanged();
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
@@ -257,34 +254,52 @@ public class PhotoFixRound {
         Class<?> aClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2$a", classLoader);
         if (aClass == null)
             return;
-        XposedHelpers.findAndHookMethod(aClass, "getView", int.class, View.class, ViewGroup.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                ViewGroup vg = (ViewGroup) param.getResult();
-                ImageView im = (ImageView) vg.getChildAt(0);
-                if (im.getDrawable().getIntrinsicWidth() == -1) {
-                    Drawable background = im.getBackground();
-                    background = new BitmapDrawable(cutRound(background));
-                    im.setBackground(background);
-                    BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                    adapter.notifyDataSetChanged();
-                }
-            }
-        });
+        // 有的不会生效，废弃
+//        XposedHelpers.findAndHookMethod(aClass, "getView", int.class, View.class, ViewGroup.class, new XC_MethodHook() {
+//            @Override
+//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                ViewGroup vg = (ViewGroup) param.getResult();
+//                ImageView im = (ImageView) vg.getChildAt(0);
+//                if (im.getDrawable().getIntrinsicWidth() == -1) {
+//                    Drawable background = im.getBackground();
+//                    background = new BitmapDrawable(cutRound(background));
+//                    im.setBackground(background);
+//                    BaseAdapter adapter = (BaseAdapter) param.thisObject;
+//                    adapter.notifyDataSetChanged();
+//                }
+//            }
+//        });
 
-        XposedHelpers.findAndHookMethod("com.tencent.mobileqq.widget.share.ShareActionSheetV2", classLoader, "L",
-                new XC_MethodHook() {
+        for (Method method : aClass.getDeclaredMethods()) {
+            if (method.getName().equals("a") && !Modifier.isStatic(method.getModifiers())) {
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        Object obj = param.thisObject;
-                        Field jq = obj.getClass().getDeclaredField("Jq");
-                        jq.setAccessible(true);
-                        List list = (List) jq.get(obj);
-                        for (Object o : list) {
-                            ReflectUtil.loggingField("kkk", o);
-                        }
+                        Object arg = param.args[0];
+                        ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
+                        Drawable background = new BitmapDrawable(cutRound(vIcon.getBackground()));
+                        vIcon.setBackground(background);
+                        BaseAdapter adapter = (BaseAdapter) param.thisObject;
+                        adapter.notifyDataSetChanged();
                     }
                 });
+                break;
+            }
+        }
+
+//        XposedHelpers.findAndHookMethod("com.tencent.mobileqq.widget.share.ShareActionSheetV2", classLoader, "L",
+//                new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        Object obj = param.thisObject;
+//                        Field jq = obj.getClass().getDeclaredField("Jq");
+//                        jq.setAccessible(true);
+//                        List list = (List) jq.get(obj);
+//                        for (Object o : list) {
+//                            ReflectUtil.loggingField("kkk", o);
+//                        }
+//                    }
+//                });
     }
 
 
