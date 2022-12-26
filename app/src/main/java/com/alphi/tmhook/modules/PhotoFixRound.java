@@ -36,7 +36,6 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
-    private Runnable r1;
     private Runnable r2;
 
     private final Handler handler;
@@ -195,9 +194,6 @@ public class PhotoFixRound {
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        if (r1 != null) {
-                            handler.removeCallbacks(r1);
-                        }
                         int i0 = (int) param.args[0];
                         BaseAdapter baseAdapter = (BaseAdapter) param.thisObject;
                         Object getItem = baseAdapter.getClass().getDeclaredMethod("getItem", int.class).invoke(baseAdapter, i0);
@@ -210,8 +206,7 @@ public class PhotoFixRound {
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
-                                r1 = baseAdapter::notifyDataSetChanged;
-                                handler.post(r1);
+                                baseAdapter.notifyDataSetChanged();
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
