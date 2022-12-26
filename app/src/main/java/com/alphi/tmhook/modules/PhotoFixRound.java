@@ -36,7 +36,6 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
-    private Field aahtBaseAdapt;
 
     private final Handler handler;
 
@@ -48,9 +47,9 @@ public class PhotoFixRound {
     public static void hook(ClassLoader classLoader) {
         PhotoFixRound p = new PhotoFixRound();
         p.classLoader = classLoader;
+        p.hookMsgList();
         p.hookCacheMapFromNet();
         p.hookDeviceListFragment();
-        p.hookMsgList();
         p.hookShareAction();
     }
 
@@ -173,8 +172,7 @@ public class PhotoFixRound {
                 , "BaseMsgBoxActivity"};
         if (aahs == null) {
             F1:
-            for (int i = 0, claNamesLength = claNames.length; i < claNamesLength; i++) {
-                String claName = claNames[i];
+            for (String claName : claNames) {
                 Class<?> clazz1 = findClass(classLoader, claName);
                 if (clazz1 == null) {
                     MLog.e(TAG, "not found auxiliary class");
@@ -183,8 +181,6 @@ public class PhotoFixRound {
                 for (Field field : clazz1.getFields()) {
                     Class<?> type = field.getType();
                     if (type.getSuperclass() == BaseAdapter.class) {
-                        if (i == 0)
-                            aahtBaseAdapt = field;
                         aahs = type;
                         break F1;
                     }
@@ -197,10 +193,9 @@ public class PhotoFixRound {
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        BaseAdapter adapter = (BaseAdapter) param.thisObject;
                         int i0 = (int) param.args[0];
-                        Object thisObject = param.thisObject;
-                        Object getItem = thisObject.getClass().getDeclaredMethod("getItem", int.class).invoke(thisObject, i0);
+                        BaseAdapter baseAdapter = (BaseAdapter) param.thisObject;
+                        Object getItem = baseAdapter.getClass().getDeclaredMethod("getItem", int.class).invoke(baseAdapter, i0);
 //                            MLog.d("aahs", getItem.toString());
                         assert getItem != null;
                         Class<?> clazz = getItem.getClass();
@@ -210,19 +205,13 @@ public class PhotoFixRound {
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
+                                baseAdapter.notifyDataSetChanged();
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
                         }
                     }
                 });
-        XposedHelpers.findAndHookMethod("com.tencent.mobileqq.confess.BaseMsgListFragment", classLoader, "onResume", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                BaseAdapter adapter = (BaseAdapter) aahtBaseAdapt.get(param.thisObject);
-                new Handler().postDelayed(adapter::notifyDataSetChanged, 200);
-            }
-        });
     }
 
     /**
