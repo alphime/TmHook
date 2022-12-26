@@ -42,12 +42,37 @@ public class ReflectUtil {
         return null;
     }
 
-    // 打印变量信息
-    public static void loggingField(String tag, Object obj) throws IllegalAccessException {
+    /**
+     * 打印变量信息
+     * @param tag 标签
+     * @param obj obj对象
+     * @param containClazz 过滤obj对象包含的子对象的变量类型
+     * @throws IllegalAccessException 如果获取子对象出现错误则抛出
+     */
+    public static void loggingField(String tag, Object obj, Class<?>... containClazz) throws IllegalAccessException {
+        if (obj == null) {
+            Log.d(tag, "obj is null");
+            return;
+        }
+        Log.d(tag, "-----" + "logging-obj-- '" + obj + "' -------");
         Field[] fields = obj.getClass().getDeclaredFields();
+        int cLength = containClazz.length;
         for (Field field : fields) {
-            field.setAccessible(true);
-            Log.d(tag, field.getName() + ": " + field.get(obj));
+            boolean boo = true;
+            Class<?> type = field.getType();
+            if (cLength > 0) {
+                boo = false;
+                for (Class<?> clazz : containClazz) {
+                    if (clazz == type) {
+                        boo = true;
+                        break;
+                    }
+                }
+            }
+            if (boo) {
+                field.setAccessible(true);
+                Log.d(tag, field.getName() + ": " + field.get(obj));
+            }
         }
     }
 }

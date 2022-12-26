@@ -23,7 +23,11 @@ import de.robv.android.xposed.XposedBridge;
 public class HookSwiftMenuQWeb {
     private final String TAG = "qhmk5";
 
-    public HookSwiftMenuQWeb(ClassLoader classLoader) {
+    public static void hook(ClassLoader classLoader) {
+        new HookSwiftMenuQWeb(classLoader);
+    }
+
+    private HookSwiftMenuQWeb(ClassLoader classLoader) {
         Class<?> h5PluginClass = findClass(classLoader, "Lcom/tencent/biz/pubaccount/util/PublicAccountH5AbilityPlugin;");
         Class<?> qShareUtils = findClass(classLoader, "Lcom/tencent/biz/pubaccount/readinjoy/viola/modules/QShareUtils");
         try {

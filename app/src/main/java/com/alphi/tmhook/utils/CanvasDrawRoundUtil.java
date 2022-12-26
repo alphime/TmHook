@@ -12,26 +12,37 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 public class CanvasDrawRoundUtil {
     public static Bitmap cutRound(Drawable source) {
-        if (source == null)
+        if (source == null) {
+            Log.e("cutRound()", "drawable is null!");
             return null;
-        if (source instanceof BitmapDrawable) {
-            return ((BitmapDrawable) source).getBitmap();
         }
-        int width = source.getIntrinsicWidth();
-        Bitmap outBitmap = Bitmap.createBitmap(width, source.getIntrinsicWidth(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(outBitmap);
-        source.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        source.draw(canvas);
-        return cutRound(outBitmap);
+        Bitmap bitmapSource;
+        if (source instanceof BitmapDrawable) {
+            bitmapSource = ((BitmapDrawable) source).getBitmap();
+        } else {
+            int width = source.getIntrinsicWidth();
+            if (width <= 0) {
+                MLog.e("cutRound()", "c-type: " + source.getClass() + ", iw=" + source.getIntrinsicWidth()
+                        + ", ih=" + source.getIntrinsicHeight() + ", mw=" + source.getMinimumWidth()
+                        + ", mh=" + source.getMinimumHeight());
+                return null;
+            }
+            Bitmap outBitmap = Bitmap.createBitmap(width, source.getIntrinsicWidth(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(outBitmap);
+            source.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            source.draw(canvas);
+            bitmapSource = outBitmap;
+        }
+        return cutRound(bitmapSource);
     }
 
     public static Bitmap cutRound(Bitmap source) {
         if (source == null)
             return null;
-        long millis = System.currentTimeMillis();
         int width = source.getWidth();
         Bitmap outBitmap = Bitmap.createBitmap(width, source.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(outBitmap);
