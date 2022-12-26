@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -36,11 +37,12 @@ public class PhotoFixRound {
     private Class<?> aahs;
     private Class<?> yyr;
 
-    private final Handler handler = new Handler();
+    private final Handler handler;
     private Runnable r;
 
     private PhotoFixRound() {
         super();
+        handler = new Handler(Looper.getMainLooper());
     }
 
     public static void hook(ClassLoader classLoader) {
