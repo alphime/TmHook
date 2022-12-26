@@ -19,7 +19,7 @@
 
         <meta-data
             android:name="xposeddescription"
-            android:value="仅在3.4.9版本测试过" />
+            android:value="仅在3.5.0版本测试过" />
     </application>
 
 </manifest>
