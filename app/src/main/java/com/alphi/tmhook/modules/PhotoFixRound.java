@@ -36,9 +36,9 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
+    private Field aahtBaseAdapt;
 
     private final Handler handler;
-    private Runnable r;
 
     private PhotoFixRound() {
         super();
@@ -173,7 +173,8 @@ public class PhotoFixRound {
                 , "BaseMsgBoxActivity"};
         if (aahs == null) {
             F1:
-            for (String claName : claNames) {
+            for (int i = 0, claNamesLength = claNames.length; i < claNamesLength; i++) {
+                String claName = claNames[i];
                 Class<?> clazz1 = findClass(classLoader, claName);
                 if (clazz1 == null) {
                     MLog.e(TAG, "not found auxiliary class");
@@ -182,6 +183,8 @@ public class PhotoFixRound {
                 for (Field field : clazz1.getFields()) {
                     Class<?> type = field.getType();
                     if (type.getSuperclass() == BaseAdapter.class) {
+                        if (i == 0)
+                            aahtBaseAdapt = field;
                         aahs = type;
                         break F1;
                     }
@@ -207,13 +210,19 @@ public class PhotoFixRound {
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
-                                handler.post(adapter::notifyDataSetChanged);
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
                         }
                     }
                 });
+        XposedHelpers.findAndHookMethod("com.tencent.mobileqq.confess.BaseMsgListFragment", classLoader, "onResume", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                BaseAdapter adapter = (BaseAdapter) aahtBaseAdapt.get(param.thisObject);
+                new Handler().postDelayed(adapter::notifyDataSetChanged, 200);
+            }
+        });
     }
 
     /**
@@ -244,9 +253,7 @@ public class PhotoFixRound {
 //                        MLog.d(TAG, param.getResult().toString());
                         FrameLayout layout = (FrameLayout) param.getResult();
                         if (layout != null) {
-                            BaseAdapter adapter = (BaseAdapter) param.thisObject;
                             ergodicImageView(layout, true);
-                            handler.post(adapter::notifyDataSetChanged);
 //                            Log.d(TAG, "success");
                         } else {
                             MLog.e(TAG, layout.toString() + ": layout is null");
@@ -286,10 +293,7 @@ public class PhotoFixRound {
                         Drawable background = new BitmapDrawable(cutRound(vIcon.getBackground()));
                         vIcon.setBackground(background);
                         BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                        if (r != null)
-                            handler.removeCallbacks(r);
-                        r = adapter::notifyDataSetChanged;
-                        handler.post(r);
+                        handler.post(adapter::notifyDataSetChanged);
                     }
                 });
                 break;
