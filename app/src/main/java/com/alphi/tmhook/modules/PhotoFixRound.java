@@ -207,6 +207,7 @@ public class PhotoFixRound {
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
                                 ergodicImageView(layout, false);
+                                handler.post(adapter::notifyDataSetChanged);
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
