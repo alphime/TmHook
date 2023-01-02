@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alphi.tmhook.modules.HookSwiftMenuQWeb;
 import com.alphi.tmhook.modules.IQQLevelShowing;
 import com.alphi.tmhook.modules.LebaMovedForQzonePlug;
 import com.alphi.tmhook.modules.PhotoFixRound;

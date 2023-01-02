@@ -1,4 +1,4 @@
-package com.alphi.tmhook;
+package com.alphi.tmhook.modules;
 
 import static com.alphi.tmhook.utils.ReflectUtil.findClass;
 

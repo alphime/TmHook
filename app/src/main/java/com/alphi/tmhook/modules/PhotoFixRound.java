@@ -11,8 +11,6 @@ import static com.alphi.tmhook.utils.ReflectUtil.findClass;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -36,13 +34,9 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
-    private Runnable r2;
-
-    private final Handler handler;
 
     private PhotoFixRound() {
         super();
-        handler = new Handler(Looper.getMainLooper());
     }
 
     public static void hook(ClassLoader classLoader) {
@@ -263,8 +257,8 @@ public class PhotoFixRound {
 //            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 //                ViewGroup vg = (ViewGroup) param.getResult();
 //                ImageView im = (ImageView) vg.getChildAt(0);
-//                if (im.getDrawable().getIntrinsicWidth() == -1) {
-//                    Drawable background = im.getBackground();
+//                Drawable background = im.getBackground();
+//                if (background != null) {
 //                    background = new BitmapDrawable(cutRound(background));
 //                    im.setBackground(background);
 //                    BaseAdapter adapter = (BaseAdapter) param.thisObject;
@@ -278,15 +272,16 @@ public class PhotoFixRound {
                 XposedBridge.hookMethod(method, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        if (r2 != null)
-                            handler.removeCallbacks(r2);
+                        BaseAdapter adapter = (BaseAdapter) param.thisObject;
                         Object arg = param.args[0];
                         ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
-                        Drawable background = new BitmapDrawable(cutRound(vIcon.getBackground()));
-                        vIcon.setBackground(background);
-                        BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                        r2 = adapter::notifyDataSetChanged;
-                        handler.post(r2);
+                        Drawable faceDrawable = vIcon.getBackground();
+                        if (faceDrawable != null) {
+                            faceDrawable = new BitmapDrawable(cutRound(faceDrawable));
+                            vIcon.setBackground(null);
+                            adapter.notifyDataSetChanged();
+                            vIcon.setImageDrawable(faceDrawable);
+                        }
                     }
                 });
                 break;
