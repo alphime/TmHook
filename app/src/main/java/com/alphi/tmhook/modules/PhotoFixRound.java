@@ -36,7 +36,6 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
-    private int mIsJustStart = 0;
 
     private PhotoFixRound() {
         super();
@@ -48,7 +47,7 @@ public class PhotoFixRound {
         p.hookMsgList();
         p.hookCacheMapFromNet();
         p.hookDeviceListFragment();
-        p.hookShareAction();
+        p.hookShareActionMenu();
     }
 
     /**
@@ -161,6 +160,7 @@ public class PhotoFixRound {
 
     /**
      * 对全局消息列表Hook
+     * 主要针对软件自带的图标，例如群助手、关联账号、邮件提醒图标等等。。。但是热启动不一定生效，冷启动还是有效果的。。。
      */
     private void hookMsgList() {
         final String TAG = "aahs";
@@ -202,13 +202,7 @@ public class PhotoFixRound {
                             LinearLayout layout = (LinearLayout) param.getResult();
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
-                                ergodicImageView(layout, false, mIsJustStart >= 0);
-                                baseAdapter.notifyDataSetChanged();
-                                if (mIsJustStart != -1) {
-                                    mIsJustStart++;
-                                    if (mIsJustStart > 18 || mIsJustStart >= baseAdapter.getCount())
-                                        mIsJustStart = -1;
-                                }
+                                ergodicImageView(layout, false);
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
@@ -245,7 +239,7 @@ public class PhotoFixRound {
 //                        MLog.d(TAG, param.getResult().toString());
                         FrameLayout layout = (FrameLayout) param.getResult();
                         if (layout != null) {
-                            ergodicImageView(layout, true, false);
+                            ergodicImageView(layout, true);
 //                            Log.d(TAG, "success");
                         } else {
                             MLog.e(TAG, layout.toString() + ": layout is null");
@@ -255,7 +249,7 @@ public class PhotoFixRound {
     }
 
 
-    private void hookShareAction() {
+    private void hookShareActionMenu() {
         Class<?> aClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2$a", classLoader);
         if (aClass == null && BaseAdapter.class.isAssignableFrom(aClass))
             return;
@@ -319,16 +313,15 @@ public class PhotoFixRound {
      * 遍历 ViewGroup 并只设置 头个ImageView的图像
      * @param v ImageView的ViewGroup
      * @param fixImageBFG 同时修饰ImageView的背景
-     * @param byHandler 通过Handler来更新图像，用来针对hook不生效的时候使用
      */
-    private void ergodicImageView(ViewGroup v, boolean fixImageBFG, boolean byHandler) {
+    private void ergodicImageView(ViewGroup v, boolean fixImageBFG) {
         String TAG = "ergodicImageView";
         for (int i = 0; i < v.getChildCount(); i++) {
             View view = v.getChildAt(i);
             if (view instanceof ViewGroup) {
                 ViewGroup viewGroup = (ViewGroup) view;
 //                                    MLog.w(TAG, "e... " + v.toString());           // debug-2‘
-                ergodicImageView(viewGroup, fixImageBFG, false);
+                ergodicImageView(viewGroup, fixImageBFG);
             } else {
                 if (view instanceof ImageView) {
                     ImageView imageView = (ImageView) view;
@@ -339,15 +332,7 @@ public class PhotoFixRound {
                             imageView.setBackground(new BitmapDrawable(imageView.getContext().getResources(), cutRound(mImageViewBackground)));
                     }
                     if (drawable != null && (drawable.getClass() != BitmapDrawable.class)) {
-                        if (byHandler)
-                            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imageView.setImageBitmap(cutRound(imageView.getDrawable()));
-                                }
-                            });
-                        else
-                            imageView.setImageBitmap(cutRound(imageView.getDrawable()));
+                        imageView.setImageBitmap(cutRound(imageView.getDrawable()));
                     }
                 }
                 break;
