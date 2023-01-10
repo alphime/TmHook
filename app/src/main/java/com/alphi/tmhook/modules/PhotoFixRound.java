@@ -11,6 +11,8 @@ import static com.alphi.tmhook.utils.ReflectUtil.findClass;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -34,6 +36,7 @@ public class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
+    private int mIsJustStart = 0;
 
     private PhotoFixRound() {
         super();
@@ -199,8 +202,13 @@ public class PhotoFixRound {
                             LinearLayout layout = (LinearLayout) param.getResult();
                             if (layout != null) {
 //                                    MLog.d(TAG, "getItem: " + getItem.toString());
-                                ergodicImageView(layout, false);
+                                ergodicImageView(layout, false, mIsJustStart >= 0);
                                 baseAdapter.notifyDataSetChanged();
+                                if (mIsJustStart != -1) {
+                                    mIsJustStart++;
+                                    if (mIsJustStart > 18 || mIsJustStart >= baseAdapter.getCount())
+                                        mIsJustStart = -1;
+                                }
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
                             }
@@ -237,7 +245,7 @@ public class PhotoFixRound {
 //                        MLog.d(TAG, param.getResult().toString());
                         FrameLayout layout = (FrameLayout) param.getResult();
                         if (layout != null) {
-                            ergodicImageView(layout, true);
+                            ergodicImageView(layout, true, false);
 //                            Log.d(TAG, "success");
                         } else {
                             MLog.e(TAG, layout.toString() + ": layout is null");
@@ -249,7 +257,7 @@ public class PhotoFixRound {
 
     private void hookShareAction() {
         Class<?> aClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2$a", classLoader);
-        if (aClass == null)
+        if (aClass == null && BaseAdapter.class.isAssignableFrom(aClass))
             return;
         // 有的不会生效，废弃
 //        XposedHelpers.findAndHookMethod(aClass, "getView", int.class, View.class, ViewGroup.class, new XC_MethodHook() {
@@ -277,10 +285,13 @@ public class PhotoFixRound {
                         ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
                         Drawable faceDrawable = vIcon.getBackground();
                         if (faceDrawable != null) {
-                            faceDrawable = new BitmapDrawable(cutRound(faceDrawable));
-                            vIcon.setBackground(null);
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    vIcon.setBackground(new BitmapDrawable(cutRound(faceDrawable)));
+                                }
+                            });
                             adapter.notifyDataSetChanged();
-                            vIcon.setImageDrawable(faceDrawable);
                         }
                     }
                 });
@@ -304,14 +315,20 @@ public class PhotoFixRound {
     }
 
 
-    private void ergodicImageView(ViewGroup v, boolean fixImageBFG) {
+    /**
+     * 遍历 ViewGroup 并只设置 头个ImageView的图像
+     * @param v ImageView的ViewGroup
+     * @param fixImageBFG 同时修饰ImageView的背景
+     * @param byHandler 通过Handler来更新图像，用来针对hook不生效的时候使用
+     */
+    private void ergodicImageView(ViewGroup v, boolean fixImageBFG, boolean byHandler) {
         String TAG = "ergodicImageView";
         for (int i = 0; i < v.getChildCount(); i++) {
             View view = v.getChildAt(i);
             if (view instanceof ViewGroup) {
                 ViewGroup viewGroup = (ViewGroup) view;
 //                                    MLog.w(TAG, "e... " + v.toString());           // debug-2‘
-                ergodicImageView(viewGroup, fixImageBFG);
+                ergodicImageView(viewGroup, fixImageBFG, false);
             } else {
                 if (view instanceof ImageView) {
                     ImageView imageView = (ImageView) view;
@@ -322,7 +339,15 @@ public class PhotoFixRound {
                             imageView.setBackground(new BitmapDrawable(imageView.getContext().getResources(), cutRound(mImageViewBackground)));
                     }
                     if (drawable != null && (drawable.getClass() != BitmapDrawable.class)) {
-                        imageView.setImageBitmap(cutRound(imageView.getDrawable()));
+                        if (byHandler)
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imageView.setImageBitmap(cutRound(imageView.getDrawable()));
+                                }
+                            });
+                        else
+                            imageView.setImageBitmap(cutRound(imageView.getDrawable()));
                     }
                 }
                 break;
