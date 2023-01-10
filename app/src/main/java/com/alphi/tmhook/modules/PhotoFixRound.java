@@ -160,7 +160,8 @@ public class PhotoFixRound {
 
     /**
      * 对全局消息列表Hook
-     * 主要针对软件自带的图标，例如群助手、关联账号、邮件提醒图标等等。。。但是热启动不一定生效，冷启动还是有效果的。。。
+     * 主要针对软件自带的图标，例如群助手、关联账号、邮件提醒图标等等。。。
+     * 但是热启动不一定生效，冷启动还是有效果的。。。
      */
     private void hookMsgList() {
         final String TAG = "aahs";
