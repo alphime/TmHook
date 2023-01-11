@@ -80,7 +80,7 @@ public final class TimMailForcedActivate {
         }
         XposedHelpers.findAndHookMethod(auffa, "isEnable", new XC_MethodReplacement(5) {
             @Override
-            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+            protected Object replaceHookedMethod(MethodHookParam methodHookParam) {
                 return true;
             }
         });
