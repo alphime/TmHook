@@ -25,6 +25,9 @@ public class LebaMovedForQzonePlug {
         super();
     }
 
+    /**
+     * 调整“我”的功能模块，当选择全部(9个)显示时，QQ空间与工作区对调
+     */
     public static void hook(ClassLoader classLoader) {
         new LebaMovedForQzonePlug().swapTimLeba(classLoader);
     }
@@ -48,8 +51,8 @@ public class LebaMovedForQzonePlug {
                         MLog.i("aumc", "step for found GridListView's dataList");
                         XposedBridge.hookMethod(method, new XC_MethodHook() {
                             @Override
-                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                List list = (List) param.args[0];
+                            protected void beforeHookedMethod(MethodHookParam param) {
+                                List<?> list = (List<?>) param.args[0];
                                 Collections.swap(list, 7, 8);
                             }
                         });

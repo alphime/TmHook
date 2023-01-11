@@ -41,6 +41,9 @@ public class PhotoFixRound {
         super();
     }
 
+    /**
+     * 裁剪好友头像为圆头像
+     */
     public static void hook(ClassLoader classLoader) {
         PhotoFixRound p = new PhotoFixRound();
         p.classLoader = classLoader;
@@ -280,10 +283,13 @@ public class PhotoFixRound {
                         ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
                         Drawable faceDrawable = vIcon.getBackground();
                         if (faceDrawable != null) {
+                            BitmapDrawable drawableFixed = new BitmapDrawable(null, cutRound(faceDrawable));
+                            vIcon.setBackground(drawableFixed);
+                            // 加强处理，防止setBackground没有即刻刷新导致部分头像方形
                             new Handler(Looper.getMainLooper()).post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    vIcon.setBackground(new BitmapDrawable(cutRound(faceDrawable)));
+                                    vIcon.setBackground(drawableFixed);
                                 }
                             });
                             adapter.notifyDataSetChanged();
@@ -330,7 +336,7 @@ public class PhotoFixRound {
                     if (fixImageBFG) {
                         Drawable mImageViewBackground = imageView.getBackground();
                         if (mImageViewBackground != null)
-                            imageView.setBackground(new BitmapDrawable(imageView.getContext().getResources(), cutRound(mImageViewBackground)));
+                            imageView.setBackground(new BitmapDrawable(null, cutRound(mImageViewBackground)));
                     }
                     if (drawable != null && (drawable.getClass() != BitmapDrawable.class)) {
                         imageView.setImageBitmap(cutRound(imageView.getDrawable()));

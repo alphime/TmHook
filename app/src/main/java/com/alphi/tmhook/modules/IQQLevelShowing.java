@@ -28,6 +28,9 @@ public class IQQLevelShowing {
     }
 
 
+    /**
+     * hook好友名片，添加QQ等级显示
+     */
     public static void hook(ClassLoader classLoader) {
         new IQQLevelShowing().hookShowIQQLevel(classLoader);
     }
@@ -82,7 +85,7 @@ public class IQQLevelShowing {
 
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        List list = (List) param.args[0];
+                        List<Object> list = (List<Object>) param.args[0];
                         if (list.contains(asznObjTemp))
                             return;
                         String uin = null;

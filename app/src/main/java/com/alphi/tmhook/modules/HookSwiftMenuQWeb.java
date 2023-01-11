@@ -23,6 +23,9 @@ import de.robv.android.xposed.XposedBridge;
 public class HookSwiftMenuQWeb {
     private final String TAG = "qhmk5";
 
+    /**
+     * 移除内置浏览器菜单的”QQ浏览器打开“选项
+     */
     public static void hook(ClassLoader classLoader) {
         new HookSwiftMenuQWeb(classLoader);
     }
@@ -62,7 +65,7 @@ public class HookSwiftMenuQWeb {
                             @Override
                             protected void beforeHookedMethod(MethodHookParam param) {
                                 try {
-                                    Set set = (Set) param.args[1];
+                                    Set<?> set = (Set<?>) param.args[1];
                                     set.remove("menuItem:openWithQQBrowser");
                                     Log.d(TAG, "beforeHookedMethod: " + Arrays.toString(set.toArray()));
                                 } catch (Exception e) {

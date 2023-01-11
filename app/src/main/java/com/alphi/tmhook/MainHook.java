@@ -22,7 +22,7 @@ import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
-    protected static ClassLoader classLoader;
+    private ClassLoader classLoader;
     private final String pkgName = "com.tencent.tim";
 
     @Override

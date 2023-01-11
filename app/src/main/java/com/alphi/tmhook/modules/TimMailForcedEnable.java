@@ -22,6 +22,9 @@ public class TimMailForcedEnable {
         super();
     }
 
+    /**
+     * 强制激活邮箱模块功能，拒绝一切云控！
+     */
     public static void hook(ClassLoader classLoader) {
         new TimMailForcedEnable().fixMailModule(classLoader);
     }
