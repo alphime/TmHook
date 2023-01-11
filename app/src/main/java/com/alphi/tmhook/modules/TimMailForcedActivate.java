@@ -7,12 +7,13 @@ package com.alphi.tmhook.modules;
 
 import static com.alphi.tmhook.utils.ReflectUtil.findClass;
 
+import com.alphi.tmhook.utils.MLog;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public final class TimMailForcedActivate {
@@ -48,7 +49,7 @@ public final class TimMailForcedActivate {
         if (clazz == null) {
             clazz = findClass(classLoader, "com.tencent.tim.mail.MailPluginPreload");
             if (clazz == null) {
-                XposedBridge.log("mailHookInit-err!: not found MailPluginPreload and StructingMsgItemBuilder");
+                MLog.e("mailHookInit-err!", "not found Class<MailPluginPreload> and Class<StructingMsgItemBuilder>");
                 return;
             }
         }
@@ -75,7 +76,7 @@ public final class TimMailForcedActivate {
             }
         }
         if (auffa == null) {
-            XposedBridge.log("mailHookInit-err!: not found auff$a");
+            MLog.e("mailHookInit-err!", "not found Class<Mail??>");
             return;
         }
         XposedHelpers.findAndHookMethod(auffa, "isEnable", new XC_MethodReplacement(5) {

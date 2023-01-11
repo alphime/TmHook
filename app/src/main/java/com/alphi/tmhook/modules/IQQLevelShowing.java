@@ -40,7 +40,7 @@ public final class IQQLevelShowing {
         String IQQLevelContent = "Lv.%d";
         Class<?> mCardClass = findClass(classLoader, "com.tencent.mobileqq.data.Card");
         if (mCardClass == null) {
-            MLog.e(tag, "not found card class");
+            MLog.e(tag, "not found class<...data.Card>");
             return;
         }
 //        for (Method method : mCardClass.getDeclaredMethods()) {

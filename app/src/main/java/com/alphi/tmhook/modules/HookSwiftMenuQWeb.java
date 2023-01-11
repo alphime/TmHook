@@ -32,10 +32,10 @@ public final class HookSwiftMenuQWeb {
 
     private HookSwiftMenuQWeb(ClassLoader classLoader) {
         Class<?> h5PluginClass = findClass(classLoader, "Lcom/tencent/biz/pubaccount/util/PublicAccountH5AbilityPlugin;");
-        Class<?> qShareUtils = findClass(classLoader, "Lcom/tencent/biz/pubaccount/readinjoy/viola/modules/QShareUtils");
+        Class<?> qShareUtilsClass = findClass(classLoader, "Lcom/tencent/biz/pubaccount/readinjoy/viola/modules/QShareUtils");
         try {
             if (h5PluginClass == null) {
-                MLog.e(TAG, "HookSwiftMenuQWeb: 加载出错");
+                MLog.e(TAG, "HookSwiftMenuQWeb: 加载出错; not found Class<PublicAccountH5AbilityPlugin>");
             } else {
                 for (Method m : h5PluginClass.getDeclaredMethods()) {
                     if (m.getReturnType() == boolean.class && Arrays.equals(m.getParameterTypes(), new Class<?>[]{ArrayList.class, String.class}) && Modifier.isStatic(m.getModifiers())) {
@@ -56,10 +56,10 @@ public final class HookSwiftMenuQWeb {
                     }
                 }
             }
-            if (qShareUtils == null) {
-                MLog.e(TAG, "HookSwiftMenuQShareUtils: 加载错误");
+            if (qShareUtilsClass == null) {
+                MLog.e(TAG, "HookSwiftMenuQShareUtils: 加载错误; not found Class<QShareUtils>");
             } else {
-                for (Method m : qShareUtils.getDeclaredMethods()) {
+                for (Method m : qShareUtilsClass.getDeclaredMethods()) {
                     if (m.getReturnType() == List[].class && Arrays.equals(m.getParameterTypes(), new Class<?>[]{boolean.class, Set.class}) && Modifier.isStatic(m.getModifiers())) {
                         XC_MethodHook xc_methodHook = new XC_MethodHook() {
                             @Override

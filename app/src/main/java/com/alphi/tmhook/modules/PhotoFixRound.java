@@ -121,7 +121,7 @@ public final class PhotoFixRound {
         // hook 缓存
         Class<?> clazz = findClass(classLoader, "com.tencent.mobileqq.app.QQAppInterface");
         if (clazz == null) {
-            MLog.e("QQFaceRoundHook", "not found class err");
+            MLog.e("QQFaceRoundHook", "not found Class<QQAppInterface>");
             return;
         }
 
@@ -177,7 +177,7 @@ public final class PhotoFixRound {
             for (String claName : claNames) {
                 Class<?> clazz1 = findClass(classLoader, claName);
                 if (clazz1 == null) {
-                    MLog.e(TAG, "not found auxiliary class");
+                    MLog.e(TAG, "not found Class<Auxiliary>");
                     return;
                 }
                 for (Field field : clazz1.getFields()) {
@@ -223,7 +223,7 @@ public final class PhotoFixRound {
         if (yyr == null) {
             Class<?> clazz = findClass(classLoader, "com.tencent.mobileqq.activity.contacts.device.DeviceFragment");
             if (clazz == null) {
-                MLog.e(TAG, "not found DeviceFragment class");
+                MLog.e(TAG, "not found Class<DeviceFragment>");
                 return;
             }
             for (Field field : clazz.getDeclaredFields()) {
@@ -255,8 +255,21 @@ public final class PhotoFixRound {
 
     private void hookShareActionMenu() {
         Class<?> aClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2$a", classLoader);
-        if (aClass == null && BaseAdapter.class.isAssignableFrom(aClass))
+        if (aClass == null || !BaseAdapter.class.isAssignableFrom(aClass)) {
+            aClass = null;
+            Class<?> aClass1 = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2", classLoader);
+            for (Field field : aClass1.getFields()) {
+                Class<?> aClass2 = field.getType();
+                if (BaseAdapter.class.isAssignableFrom(aClass2)) {
+                    aClass = aClass2;
+                }
+                break;
+            }
+        }
+        if (aClass == null) {
+            MLog.e("hookShareActionMenu", "not found Class<ShareActionSheetV2$Adapter>");
             return;
+        }
         // 有的不会生效，废弃
 //        XposedHelpers.findAndHookMethod(aClass, "getView", int.class, View.class, ViewGroup.class, new XC_MethodHook() {
 //            @Override

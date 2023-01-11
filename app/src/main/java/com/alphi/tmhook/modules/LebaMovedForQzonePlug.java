@@ -35,7 +35,7 @@ public final class LebaMovedForQzonePlug {
     private void swapTimLeba(ClassLoader classLoader) {
         Class<?> leba = findClass(classLoader, "com.tencent.mobileqq.activity.tim.timme.TimLeba");
         if (leba == null) {
-            MLog.e("TimLeba", "not found TimLeba");
+            MLog.e("TimLeba", "not found Class<TimLeba>");
             return;
         }
         for (Field field : leba.getDeclaredFields()) {
