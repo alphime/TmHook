@@ -31,7 +31,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-public class PhotoFixRound {
+public final class PhotoFixRound {
     private Method qi_Mtd;
     private ClassLoader classLoader;
     private Class<?> aahs;

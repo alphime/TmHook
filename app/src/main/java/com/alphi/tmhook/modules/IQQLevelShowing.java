@@ -20,7 +20,7 @@ import java.util.Locale;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 
-public class IQQLevelShowing {
+public final class IQQLevelShowing {
     private Class<?> aszk;
 
     private IQQLevelShowing() {

@@ -20,7 +20,7 @@ import de.robv.android.xposed.XposedBridge;
  * IDEA 2022/1/15
  */
 
-public class HookSwiftMenuQWeb {
+public final class HookSwiftMenuQWeb {
     private final String TAG = "qhmk5";
 
     /**

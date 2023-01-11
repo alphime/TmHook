@@ -11,7 +11,7 @@ import android.util.Log;
 
 import de.robv.android.xposed.XposedBridge;
 
-public class MLog {
+public final class MLog {
     /**
      * Send a DEBUG log message.
      * @param tag Used to identify the source of a log message.  It usually identifies

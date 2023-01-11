@@ -17,7 +17,7 @@ import java.util.List;
 
 import de.robv.android.xposed.XposedHelpers;
 
-public class ReflectUtil {
+public final class ReflectUtil {
     public static Class<?> findClass(ClassLoader classLoader, @NonNull String... classNames) {
         List<String> errList = new ArrayList<>();
         for (String className: classNames) {

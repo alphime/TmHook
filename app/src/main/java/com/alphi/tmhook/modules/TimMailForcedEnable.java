@@ -15,7 +15,7 @@ import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-public class TimMailForcedEnable {
+public final class TimMailForcedEnable {
     private Class<?> auffa;
 
     private TimMailForcedEnable() {

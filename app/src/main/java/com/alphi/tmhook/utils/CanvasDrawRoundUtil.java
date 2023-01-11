@@ -14,7 +14,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
-public class CanvasDrawRoundUtil {
+public final class CanvasDrawRoundUtil {
     public static Bitmap cutRound(Drawable source) {
         if (source == null) {
             Log.e("cutRound()", "drawable is null!");

@@ -19,7 +19,7 @@ import java.util.List;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 
-public class LebaMovedForQzonePlug {
+public final class LebaMovedForQzonePlug {
 
     private LebaMovedForQzonePlug() {
         super();
