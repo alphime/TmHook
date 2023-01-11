@@ -15,10 +15,10 @@ import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-public final class TimMailForcedEnable {
+public final class TimMailForcedActivate {
     private Class<?> auffa;
 
-    private TimMailForcedEnable() {
+    private TimMailForcedActivate() {
         super();
     }
 
@@ -26,7 +26,7 @@ public final class TimMailForcedEnable {
      * 强制激活邮箱模块功能，拒绝一切云控！
      */
     public static void hook(ClassLoader classLoader) {
-        new TimMailForcedEnable().fixMailModule(classLoader);
+        new TimMailForcedActivate().fixMailModule(classLoader);
     }
 
     private void fixMailModule(ClassLoader classLoader) {
