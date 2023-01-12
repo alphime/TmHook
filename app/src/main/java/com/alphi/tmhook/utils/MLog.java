@@ -19,7 +19,7 @@ public final class MLog {
      * @param msg The message you would like logged.
      */
     public static int v(String tag, String msg) {
-        printXposedLog(tag, msg, null);
+        printXposedLog(null, tag, msg, null);
         return Log.v(tag, msg);
     }
 
@@ -31,7 +31,7 @@ public final class MLog {
      * @param tr An exception to log
      */
     public static int v(String tag, String msg, Throwable tr) {
-        printXposedLog(tag, msg, tr);
+        printXposedLog("v", tag, msg, tr);
         return Log.v(tag, msg, tr);
     }
 
@@ -43,12 +43,12 @@ public final class MLog {
      * @param msg The message you would like logged.
      */
     public static int d(String tag, String msg) {
-        printXposedLog(tag, msg, null);
+        printXposedLog(null, tag, msg, null);
         return Log.d(tag, msg);
     }
 
     public static int d(String tag, String msg, Throwable tr) {
-        printXposedLog(tag, msg, tr);
+        printXposedLog("d", tag, msg, tr);
         return Log.d(tag, msg, tr);
     }
 
@@ -59,7 +59,7 @@ public final class MLog {
      * @param msg The message you would like logged.
      */
     public static int i(String tag, String msg) {
-        printXposedLog(tag, msg, null);
+        printXposedLog(null, tag, msg, null);
         return Log.i(tag, msg);
     }
 
@@ -71,7 +71,7 @@ public final class MLog {
      * @param tr An exception to log
      */
     public static int i(String tag, String msg, Throwable tr) {
-        printXposedLog(tag, msg, tr);
+        printXposedLog("i", tag, msg, tr);
         return Log.i(tag, msg, tr);
     }
 
@@ -82,7 +82,7 @@ public final class MLog {
      * @param msg The message you would like logged.
      */
     public static int w(String tag, String msg) {
-        printXposedLog(tag, msg, null);
+        printXposedLog("w", tag, msg, null);
         return Log.w(tag, msg);
     }
 
@@ -94,7 +94,7 @@ public final class MLog {
      * @param tr An exception to log
      */
     public static int w(String tag, String msg, Throwable tr) {
-        printXposedLog(tag, msg, tr);
+        printXposedLog("w", tag, msg, tr);
         return Log.w(tag, msg, tr);
     }
 
@@ -105,7 +105,7 @@ public final class MLog {
      * @param tr An exception to log
      */
     public static int w(String tag, Throwable tr) {
-        printXposedLog(tag + "!", null, tr);
+        printXposedLog("w", tag, null, tr);
         return Log.w(tag, getStackTraceString(tr));
     }
 
@@ -116,7 +116,7 @@ public final class MLog {
      * @param msg The message you would like logged.
      */
     public static int e(String tag, String msg) {
-        printXposedLog(tag, msg, null);
+        printXposedLog("e", tag, msg, null);
         return Log.e(tag, msg);
     }
 
@@ -128,11 +128,12 @@ public final class MLog {
      * @param tr An exception to log
      */
     public static int e(String tag, String msg, Throwable tr) {
-        printXposedLog(tag + "!", msg, tr);
+        printXposedLog("e", tag, msg, tr);
         return Log.e(tag, msg, tr);
     }
 
-    private static void printXposedLog(String tag, String msg, Throwable tr) {
-        XposedBridge.log(tag + ": " + msg + '\n' + getStackTraceString(tr));
+    private static void printXposedLog(String type, String tag, String msg, Throwable tr) {
+        String typeFullStr = (type == null ? "" : type + "-: ");
+        XposedBridge.log(typeFullStr + tag + ": " + msg + '\n' + getStackTraceString(tr));
     }
 }

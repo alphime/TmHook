@@ -306,7 +306,8 @@ public final class PhotoFixRound {
                                 }
                             });
                             adapter.notifyDataSetChanged();
-                        }
+                        } else
+                            MLog.w("hookShareActionMenu:F-vIcon", "faceDrawable is null?!");
                     }
                 });
                 break;
