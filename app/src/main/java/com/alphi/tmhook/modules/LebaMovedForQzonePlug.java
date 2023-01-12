@@ -53,7 +53,9 @@ public final class LebaMovedForQzonePlug {
                             @Override
                             protected void beforeHookedMethod(MethodHookParam param) {
                                 List<?> list = (List<?>) param.args[0];
-                                Collections.swap(list, 7, 8);
+                                if (list.size() >= 9) {
+                                    Collections.swap(list, 7, 8);
+                                }
                             }
                         });
                         break;
