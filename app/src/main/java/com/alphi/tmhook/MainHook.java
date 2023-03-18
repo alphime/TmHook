@@ -38,6 +38,7 @@ public class MainHook implements IXposedHookLoadPackage {
             TimMailForcedActivate.hook(classLoader);
             LebaMovedForQzonePlug.hook(classLoader);
             HookSwiftMenuQWeb.hook(classLoader);
+//            ViewHook.hook(classLoader);
         }
     }
 

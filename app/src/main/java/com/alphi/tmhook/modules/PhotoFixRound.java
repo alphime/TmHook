@@ -352,7 +352,7 @@ public final class PhotoFixRound {
                         if (mImageViewBackground != null)
                             imageView.setBackground(new BitmapDrawable(null, cutRound(mImageViewBackground)));
                     }
-                    if (drawable != null && (drawable.getClass() != BitmapDrawable.class)) {
+                    if (drawable != null) {
                         imageView.setImageBitmap(cutRound(imageView.getDrawable()));
                     }
                 }
