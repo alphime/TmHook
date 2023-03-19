@@ -36,6 +36,7 @@ public final class PhotoFixRound {
     private ClassLoader classLoader;
     private Class<?> aahs;
     private Class<?> yyr;
+    private Method shareActionSheetBuilderB;
 
     private PhotoFixRound() {
         super();
@@ -287,36 +288,43 @@ public final class PhotoFixRound {
 //            }
 //        });
 
-        for (Method method : aClass.getDeclaredMethods()) {
-            if (!Modifier.isStatic(method.getModifiers())) {
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                if (parameterTypes.length == 1 && parameterTypes[0].getName().contains("ShareActionSheetBuilder")) {
-                    XposedBridge.hookMethod(method, new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                            BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                            Object arg = param.args[0];
-                            ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
-                            Drawable faceDrawable = vIcon.getBackground();
-                            if (faceDrawable != null) {
-                                BitmapDrawable drawableFixed = new BitmapDrawable(null, cutRound(faceDrawable));
-                                vIcon.setBackground(drawableFixed);
-                                // 加强处理，防止setBackground没有即刻刷新导致部分头像方形
-                                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        vIcon.setBackground(drawableFixed);
-                                    }
-                                });
-                                adapter.notifyDataSetChanged();
-                            } else
-                                MLog.w("hookShareActionMenu:F-vIcon", "faceDrawable is null?!");
-                        }
-                    });
-                    break;
+        if (shareActionSheetBuilderB != null) {
+            for (Method method : aClass.getDeclaredMethods()) {
+                if (!Modifier.isStatic(method.getModifiers())) {
+                    Class<?>[] parameterTypes = method.getParameterTypes();
+                    if (parameterTypes.length == 1 && parameterTypes[0].getName().contains("ShareActionSheetBuilder")) {
+                        shareActionSheetBuilderB = method;
+                        break;
+                    }
                 }
             }
         }
+
+        if (shareActionSheetBuilderB != null)
+            XposedBridge.hookMethod(shareActionSheetBuilderB, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    BaseAdapter adapter = (BaseAdapter) param.thisObject;
+                    Object arg = param.args[0];
+                    ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
+                    Drawable faceDrawable = vIcon.getBackground();
+                    if (faceDrawable != null) {
+                        BitmapDrawable drawableFixed = new BitmapDrawable(null, cutRound(faceDrawable));
+                        vIcon.setBackground(drawableFixed);
+                        // 加强处理，防止setBackground没有即刻刷新导致部分头像方形
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                vIcon.setBackground(drawableFixed);
+                            }
+                        });
+                        adapter.notifyDataSetChanged();
+                    } else
+                        MLog.w("hookShareActionMenu:F-vIcon", "faceDrawable is null?!");
+                }
+            });
+        else
+            MLog.e("hookShareActionMenu", "not found Class<shareActionSheetBuilderB>");
 
 //        XposedHelpers.findAndHookMethod("com.tencent.mobileqq.widget.share.ShareActionSheetV2", classLoader, "L",
 //                new XC_MethodHook() {
