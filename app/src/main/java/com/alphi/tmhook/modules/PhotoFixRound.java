@@ -201,16 +201,15 @@ public final class PhotoFixRound {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         int i0 = (int) param.args[0];
                         BaseAdapter baseAdapter = (BaseAdapter) param.thisObject;
-                        Object getItem = baseAdapter.getClass().getDeclaredMethod("getItem", int.class).invoke(baseAdapter, i0);
-//                            MLog.d("aahs", getItem.toString());
-                        assert getItem != null;
-                        Class<?> clazz = getItem.getClass();
-//                        Log.d(TAG, "obj: " + getItem);
+                        Object mItem = baseAdapter.getClass().getDeclaredMethod("getItem", int.class).invoke(baseAdapter, i0);
+                        assert mItem != null;
+//                        MLog.d(TAG, mItem.toString());
+                        Class<?> clazz = mItem.getClass();
                         // 排除群消息
                         if (!clazz.getSimpleName().equals("RecentItemTroopMsgData")) {
                             LinearLayout layout = (LinearLayout) param.getResult();
                             if (layout != null) {
-//                                    MLog.d(TAG, "getItem: " + getItem.toString());
+//                                MLog.d(TAG, "msgItem: " + mItem.toString());
                                 ergodicImageView(layout, false);
                             } else {
                                 MLog.e(TAG, layout.toString() + ": layout is null");
