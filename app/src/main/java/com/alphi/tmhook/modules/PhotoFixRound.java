@@ -255,8 +255,9 @@ public final class PhotoFixRound {
 
     private void hookShareActionMenu() {
         Class<?> aClass = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2$a", classLoader);
-        if (aClass == null || !BaseAdapter.class.isAssignableFrom(aClass)) {
+        if (!BaseAdapter.class.isAssignableFrom(aClass))
             aClass = null;
+        if (aClass == null) {
             Class<?> aClass1 = XposedHelpers.findClassIfExists("com.tencent.mobileqq.widget.share.ShareActionSheetV2", classLoader);
             for (Field field : aClass1.getFields()) {
                 Class<?> aClass2 = field.getType();
@@ -287,30 +288,33 @@ public final class PhotoFixRound {
 //        });
 
         for (Method method : aClass.getDeclaredMethods()) {
-            if (method.getName().equals("a") && !Modifier.isStatic(method.getModifiers())) {
-                XposedBridge.hookMethod(method, new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        BaseAdapter adapter = (BaseAdapter) param.thisObject;
-                        Object arg = param.args[0];
-                        ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
-                        Drawable faceDrawable = vIcon.getBackground();
-                        if (faceDrawable != null) {
-                            BitmapDrawable drawableFixed = new BitmapDrawable(null, cutRound(faceDrawable));
-                            vIcon.setBackground(drawableFixed);
-                            // 加强处理，防止setBackground没有即刻刷新导致部分头像方形
-                            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    vIcon.setBackground(drawableFixed);
-                                }
-                            });
-                            adapter.notifyDataSetChanged();
-                        } else
-                            MLog.w("hookShareActionMenu:F-vIcon", "faceDrawable is null?!");
-                    }
-                });
-                break;
+            if (!Modifier.isStatic(method.getModifiers())) {
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                if (parameterTypes.length == 1 && parameterTypes[0].getName().contains("ShareActionSheetBuilder")) {
+                    XposedBridge.hookMethod(method, new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            BaseAdapter adapter = (BaseAdapter) param.thisObject;
+                            Object arg = param.args[0];
+                            ImageView vIcon = (ImageView) arg.getClass().getField("vIcon").get(arg);
+                            Drawable faceDrawable = vIcon.getBackground();
+                            if (faceDrawable != null) {
+                                BitmapDrawable drawableFixed = new BitmapDrawable(null, cutRound(faceDrawable));
+                                vIcon.setBackground(drawableFixed);
+                                // 加强处理，防止setBackground没有即刻刷新导致部分头像方形
+                                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        vIcon.setBackground(drawableFixed);
+                                    }
+                                });
+                                adapter.notifyDataSetChanged();
+                            } else
+                                MLog.w("hookShareActionMenu:F-vIcon", "faceDrawable is null?!");
+                        }
+                    });
+                    break;
+                }
             }
         }
 

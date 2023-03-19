@@ -17,6 +17,7 @@ import com.alphi.tmhook.modules.IQQLevelShowing;
 import com.alphi.tmhook.modules.LebaMovedForQzonePlug;
 import com.alphi.tmhook.modules.PhotoFixRound;
 import com.alphi.tmhook.modules.TimMailForcedActivate;
+import com.alphi.tmhook.modules.ViewHook;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -38,7 +39,7 @@ public class MainHook implements IXposedHookLoadPackage {
             TimMailForcedActivate.hook(classLoader);
             LebaMovedForQzonePlug.hook(classLoader);
             HookSwiftMenuQWeb.hook(classLoader);
-//            ViewHook.hook(classLoader);
+            ViewHook.hook(classLoader);
         }
     }
 
