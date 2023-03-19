@@ -130,6 +130,9 @@ public final class PhotoFixRound {
                 "putBitmapToCache", String.class, Bitmap.class, byte.class, new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) {
+//                        Log.d("putBitmapToCache", "beforeHookedMethod: " + (String)param.args[0] + "; " + param.args[2]);
+                        if (((String) param.args[0]).startsWith("new_troop_"))
+                            return;
                         Bitmap bitmap = (Bitmap) param.args[1];
                         bitmap = cutRound(bitmap);
                         param.args[1] = bitmap;
@@ -202,6 +205,7 @@ public final class PhotoFixRound {
 //                            MLog.d("aahs", getItem.toString());
                         assert getItem != null;
                         Class<?> clazz = getItem.getClass();
+//                        Log.d(TAG, "obj: " + getItem);
                         // 排除群消息
                         if (!clazz.getSimpleName().equals("RecentItemTroopMsgData")) {
                             LinearLayout layout = (LinearLayout) param.getResult();
