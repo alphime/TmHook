@@ -288,7 +288,7 @@ public final class PhotoFixRound {
 //            }
 //        });
 
-        if (shareActionSheetBuilderB != null) {
+        if (shareActionSheetBuilderB == null) {
             for (Method method : aClass.getDeclaredMethods()) {
                 if (!Modifier.isStatic(method.getModifiers())) {
                     Class<?>[] parameterTypes = method.getParameterTypes();
@@ -324,7 +324,7 @@ public final class PhotoFixRound {
                 }
             });
         else
-            MLog.e("hookShareActionMenu", "not found Class<shareActionSheetBuilderB>");
+            MLog.e("hookShareActionMenu", "not found Method<?(ShareActionSheetBuilder$B)>");
 
 //        XposedHelpers.findAndHookMethod("com.tencent.mobileqq.widget.share.ShareActionSheetV2", classLoader, "L",
 //                new XC_MethodHook() {
