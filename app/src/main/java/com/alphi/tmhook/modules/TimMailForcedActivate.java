@@ -18,6 +18,7 @@ import de.robv.android.xposed.XposedHelpers;
 
 public final class TimMailForcedActivate {
     private Class<?> auffa;
+    private final String TAG = this.getClass().getSimpleName();
 
     private TimMailForcedActivate() {
         super();
@@ -27,7 +28,8 @@ public final class TimMailForcedActivate {
      * 强制激活邮箱模块功能，拒绝一切云控！
      */
     public static void hook(ClassLoader classLoader) {
-        new TimMailForcedActivate().fixMailModule(classLoader);
+        TimMailForcedActivate obj = new TimMailForcedActivate();
+        obj.fixMailModule(classLoader);
     }
 
     private void fixMailModule(ClassLoader classLoader) {
@@ -78,6 +80,8 @@ public final class TimMailForcedActivate {
         if (auffa == null) {
             MLog.e("mailHookInit-err!", "not found Class<Mail??>");
             return;
+        } else {
+            MLog.d(TAG, auffa + " loading success!");
         }
         XposedHelpers.findAndHookMethod(auffa, "isEnable", new XC_MethodReplacement(5) {
             @Override

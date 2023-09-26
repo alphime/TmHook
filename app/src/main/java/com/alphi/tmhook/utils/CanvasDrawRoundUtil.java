@@ -28,6 +28,8 @@ public final class CanvasDrawRoundUtil {
     }
 
     public static Bitmap cutRound(Bitmap source) {
+        if (source == null)
+            return null;
         int r = source.getWidth() / 2;
         int v = (int) ((r * 1.4 - r));
         int pixel = source.getPixel(v, v);

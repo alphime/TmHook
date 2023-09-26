@@ -11,10 +11,13 @@ import org.springframework.lang.NonNull;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public final class ReflectUtil {
@@ -73,6 +76,17 @@ public final class ReflectUtil {
                 field.setAccessible(true);
                 Log.d(tag, field.getName() + ": " + field.get(obj));
             }
+        }
+    }
+
+    public static void loggingCalledMethod(String tag, Class<?> clazz) {
+        for (Method method : clazz.getDeclaredMethods()) {
+            XposedBridge.hookMethod(method, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    Log.d(tag, "调用了 " + method + " -> " + Arrays.toString(param.args));
+                }
+            });
         }
     }
 }
